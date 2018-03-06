@@ -1,0 +1,36 @@
+@font-face {
+    font-family: 'Inconsolata';
+    src: url('./assets/fonts/Inconsolata-Regular.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('./assets/fonts/Roboto-Thin.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+:root {
+    --cytellix-dark: rgba(55, 71, 79, 1);
+    --cytellix-medium: rgba(55, 71, 79, .5);
+    --cytellix-light: rgba(55, 71, 79, .1);
+    --blue-dark: rgba(98, 159, 254, 1);
+    --blue-light: rgba(98, 159, 254, .25);
+    --green-dark: rgba(0, 218, 144, 1);
+    --green-light: rgba(0, 218, 144, .25);
+    --grey-dark: rgba(182, 182, 182, 1);
+    --grey-medium: rgba(182, 182, 182, .5);    
+    --grey-light: rgba(182, 182, 182, .1);    
+    --red-dark: rgba(255, 0, 43, 1);
+    --red-light: rgba(255, 0, 43, .25);
+    --yellow-dark: rgba(255, 162, 0, 1);
+    --yellow-light: rgba(255, 162, 0, .25);
+}
+
+body {
+    font-family: 'Roboto';
+    margin: 0;
+    padding: 0;
+}
