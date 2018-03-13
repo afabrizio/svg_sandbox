@@ -1,4 +1,6 @@
 import React from 'react';
+import { Header } from './header.component.jsx';
+import { Content } from './content.component.jsx';
 
 export class App extends React.Component {
     constructor(props) {
@@ -8,7 +10,8 @@ export class App extends React.Component {
     render() {
         return (
             <div name="App">
-                <p>Hello SVG</p>
+                <Header />
+                <Content />
             </div>
         );
     }
