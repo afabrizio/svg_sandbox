@@ -22,6 +22,11 @@ module.exports = {
     },
     module: {
         rules: [
+            // loads JSON data
+            {
+                test: /\.json$/,
+                loader: 'json-loader',
+            },
             // loads images
             {
                 test: /\.(png|svg|jpg|jpeg|gif)$/,

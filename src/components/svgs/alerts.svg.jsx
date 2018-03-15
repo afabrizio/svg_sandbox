@@ -1,7 +1,6 @@
 import React from 'react';
-import $ from 'jquery';
 
-export class Sandbox extends React.Component {
+export class Alerts extends React.Component {
     constructor(props) {
         super(props);
 
@@ -15,12 +14,12 @@ export class Sandbox extends React.Component {
     render() {
         return (
             <div name="sandbox">
-                <span className="animated-alert-icon" style={{height: '250px', width: '250px'}}>
+                {/* <span className="animated-alert-icon" style={{height: '250px', width: '250px'}}>
                     <div className="icon-container warning scaleWarning">
                         <span className="pulseWarningIns"></span>
                         <span className="pulseWarningIns"></span>
                     </div>
-                </span>
+                </span> */}
                 <svg id="svg" height={this.props.size} width={this.props.size} style={{border: 'solid 1px black', margin: '10px' }}>
                     <defs>
                         <animateTransform xlinkHref="#pulse"  attributeName="transform" type="scale" additive="sum" values="1 ; 1.05 ; 1 ; 1.05 ; 1 ; 1" keyTimes="0 ; 0.08 ; 0.25 ; 0.32 ; .5 ; 1" dur={this.props.duration || 2} repeatCount="indefinite"></animateTransform>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Sandbox } from './svgs/line.svg.jsx';
+import { Alerts } from './svgs/alerts.svg.jsx';
+import { InteractiveAreaChart } from './svgs/area-chart.svg.jsx';
 
 export class Content extends React.Component {
     constructor(props) {
@@ -17,7 +18,8 @@ export class Content extends React.Component {
     render() {
         return (
             <div name="content">
-                <Sandbox size="150" color="#F27474" duration="2s"></Sandbox>
+                <Alerts size="150" color="#F27474" duration="2s"></Alerts>
+                <InteractiveAreaChart width="600" />
             </div>
         );
     }
