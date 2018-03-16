@@ -66,11 +66,11 @@ export class InteractiveAreaChart extends React.Component {
 
     componentDidMount() {
         this.initialize();
-        this.redraw(dataset1);
+        this.rerender(true, dataset1);
         // setTimeout( () => {
-        //     this.redraw(dataset2);      
+        //     this.initialize();
+        //     this.rerender(true, dataset2);      
         // }, 2000)
-        console.log(this.state)
     }
   
     componentWillUnmount() { }
@@ -81,6 +81,10 @@ export class InteractiveAreaChart extends React.Component {
 
     initialize() {
         let self = this;
+
+        if (this.state.svg) {
+            this.state.svg.selectAll('*').remove();
+        }
 
         // defines chart margins:
         this.state.margin = {
@@ -105,13 +109,14 @@ export class InteractiveAreaChart extends React.Component {
             .attr('group', 'container')
             .attr('transform', 'translate(' + this.state.margin.left + ',' + this.state.margin.top + ')');
 
+        // generates the legend group:
         this.state.legend = this.state.svg
             .append('g')
             .attr('group', 'legend')
             .attr('transform', 'translate(' + this.state.margin.left + ', 0)')
     }
 
-    redraw(dataset) {
+    rerender(complete, dataset) {
         let self = this;
 
         // transforms data:
@@ -127,6 +132,9 @@ export class InteractiveAreaChart extends React.Component {
             .offset(stackOffsetNone)
         )(dataset.data)
 
+        // remove old elements:
+        this.state.container.selectAll('*').remove();
+
         // defines area transform function:
         this.state.area = d3Area()
             .x( (d, i) => this.state.x(d.data[dataset.xKey]) )
@@ -137,9 +145,6 @@ export class InteractiveAreaChart extends React.Component {
         this.state.line = d3Line()
             .x( (d) => self.state.x(d.data[dataset.xKey]) )
             .y( (d) => self.state.y(d[1]) );
-        
-        // remove old elements:
-        this.state.container.selectAll('*').remove();
 
         // defines axis translator functions (value => pixel location):
         this.state.x = scaleTime()
@@ -193,41 +198,13 @@ export class InteractiveAreaChart extends React.Component {
                 .attr('group', 'layer')
                 .attr('layer', (d) => d.key)
                 .attr('class', 'layer');
+        
+        if (complete) {
+            this.renderLegend(dataset)
+        }
 
         // appends the point circles and layer line traces:
         this.state.stackedData.forEach( (layer) => {
-            // appends the legend:
-            let position = {
-                start: layer.index * (self.state.width / self.state.stackedData.length),
-                offset: (self.state.width / self.state.stackedData.length) / 2,
-                spacing: 10
-            };
-            let key = this.state.legend
-                .append('g')
-                .attr('group', 'mapping')
-                .attr('key', layer.key)
-                .attr('status', 'on');
-            key.append('circle')
-                .attr('circle', layer.key)
-                .attr('r', 5)
-                .attr('cx', position.start + position.offset)
-                .attr('cy', self.state.margin.top / 2)                
-                .attr('stroke', 'black')
-                .attr('stroke-width', '1px')
-                .attr('opacity', .75)
-                .attr('fill', self.state.z(layer.key));
-            key.append('text')
-                .attr('text', 'key')
-                .attr('font-size', 10)
-                .attr('dx', position.start + position.offset + position.spacing)
-                .attr('dy', (self.state.margin.top / 2) + 3)
-                .text(layer.key);
-            key.on('click', function() {
-                let toggle = d3Select(this)
-                    .select('[circle="' + layer.key + '"]')
-                    .attr('fill', 'none')
-            });
-
             // appends each layer
             d3Select('[layer="' + layer.key + '"]')
                 .append('path')
@@ -359,6 +336,72 @@ export class InteractiveAreaChart extends React.Component {
                     .attr("transform", 'translate(' + self.state.x(d[dataset.xKey]) + ',' + self.state.y(self.computeTotal(d, dataset.yKeys)) + ')')
                     .text(self.computeTotal(d, dataset.yKeys));
             });
+
+        console.log(this.state)
+    }
+
+    renderLegend(dataset) {
+        let self = this;
+
+        this.state.legendMap = dataset.yKeys.map( (key, i) => {
+            return {
+                key: key,
+                visible: true,
+                index: i
+            }
+        });
+
+        // removes old legend elements:
+        this.state.legend.selectAll('*').remove();
+
+        // appends new legend elements:
+        this.state.stackedData.forEach( (layer => {
+            let position = {
+                start: layer.index * (self.state.width / self.state.stackedData.length),
+                offset: (self.state.width / self.state.stackedData.length) / 2,
+                spacing: 10
+            };
+            let key = this.state.legend
+                .append('g')
+                .attr('group', 'mapping')
+                .attr('key', layer.key)
+                .attr('visibility', 'show')
+                .style('cursor', 'pointer');
+            key.append('circle')
+                .attr('circle', layer.key)
+                .attr('r', 5)
+                .attr('cx', position.start + position.offset)
+                .attr('cy', self.state.margin.top / 2)                
+                .attr('stroke', 'black')
+                .attr('stroke-width', '1px')
+                .attr('opacity', .75)
+                .attr('fill', self.state.z(layer.key));
+            key.append('text')
+                .attr('text', 'key')
+                .attr('font-size', 10)
+                .attr('dx', position.start + position.offset + position.spacing)
+                .attr('dy', (self.state.margin.top / 2) + 3)
+                .text(layer.key);
+            key.on('click', function() {
+                let key = d3Select(this);
+                let toggle = d3Select(this).select('[circle="' + layer.key + '"]');
+                let updatedDataset;
+                switch (key.attr('visibility')) {
+                    case 'show':
+                        key.attr('visibility', 'hide');
+                        toggle.attr('fill', 'white');
+                        updatedDataset = Object.assign({yKeys: dataset.yKeys.splice(layer.index, 1)}, dataset);
+                        // updateLegendMap('hide', layer.index);
+                        break;
+                    default:
+                        key.attr('visibility', 'show');
+                        toggle.attr('fill', self.state.z(layer.key));
+                        updatedDataset = Object.assign({yKeys: dataset.yKeys.push(layer.key)}, dataset);
+                        // updateLegendMap('show', layer.index);
+                }
+                self.rerender(false, updatedDataset);                
+            });
+        }));
     }
 
     render() {
@@ -377,5 +420,19 @@ export class InteractiveAreaChart extends React.Component {
             }
         }
         return selectedColors;
+    }
+
+    updateLegendMap(action, index) {
+        this.state.legendMap[index].visible = false;
+        switch (action) {
+            case 'show':
+                for (let i = index; i < this.state.legendMap.length; i++) {
+
+                }
+                break;
+            case 'hide':
+                break;
+            default:
+        }
     }
 }

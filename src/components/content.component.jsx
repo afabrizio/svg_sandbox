@@ -18,7 +18,7 @@ export class Content extends React.Component {
     render() {
         return (
             <div name="content">
-                <Alerts size="150" color="#F27474" duration="2s"></Alerts>
+                <Alerts size="50" color="#F27474" duration="2s"></Alerts>
                 <InteractiveAreaChart width="800" height="250" />
             </div>
         );
