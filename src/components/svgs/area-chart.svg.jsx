@@ -108,12 +108,7 @@ export class InteractiveAreaChart extends React.Component {
         this.state.legend = this.state.svg
             .append('g')
             .attr('group', 'legend')
-            .append('rect')
-            .attr('rect', 'legend')
-            .attr('width', this.state.width)
-            .attr('height', this.state.margin.top)
             .attr('transform', 'translate(' + this.state.margin.left + ', 0)')
-            .attr('fill', 'none');
     }
 
     redraw(dataset) {
@@ -201,13 +196,45 @@ export class InteractiveAreaChart extends React.Component {
 
         // appends the point circles and layer line traces:
         this.state.stackedData.forEach( (layer) => {
+            // appends the legend:
+            let position = {
+                start: layer.index * (self.state.width / self.state.stackedData.length),
+                offset: (self.state.width / self.state.stackedData.length) / 2,
+                spacing: 10
+            };
+            let key = this.state.legend
+                .append('g')
+                .attr('group', 'mapping')
+                .attr('key', layer.key)
+                .attr('status', 'on');
+            key.append('circle')
+                .attr('circle', layer.key)
+                .attr('r', 5)
+                .attr('cx', position.start + position.offset)
+                .attr('cy', self.state.margin.top / 2)                
+                .attr('stroke', 'black')
+                .attr('stroke-width', '1px')
+                .attr('opacity', .75)
+                .attr('fill', self.state.z(layer.key));
+            key.append('text')
+                .attr('text', 'key')
+                .attr('font-size', 10)
+                .attr('dx', position.start + position.offset + position.spacing)
+                .attr('dy', (self.state.margin.top / 2) + 3)
+                .text(layer.key);
+            key.on('click', function() {
+                d3Select(this)
+                    .select('[circle="' + layer.key + '"]')
+                    .attr('fill', 'none')
+            });
+
             // appends each layer
             d3Select('[layer="' + layer.key + '"]')
                 .append('path')
                 .attr('path', 'area')
                 .style('fill', (d) => self.state.z(d.key) )
                 .attr('d', self.state.area)
-                .attr('opacity', 1);
+                .attr('opacity', .75);
 
             // appends each layer line
             d3Select('[layer="' + layer.key + '"]')
