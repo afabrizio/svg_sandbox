@@ -223,7 +223,7 @@ export class InteractiveAreaChart extends React.Component {
                 .attr('dy', (self.state.margin.top / 2) + 3)
                 .text(layer.key);
             key.on('click', function() {
-                d3Select(this)
+                let toggle = d3Select(this)
                     .select('[circle="' + layer.key + '"]')
                     .attr('fill', 'none')
             });
