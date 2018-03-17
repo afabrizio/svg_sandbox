@@ -1,15 +1,37 @@
 {
     "xKey": "date",
-    "yKeys": ["Notifications", "Nefarious Ports", "VPN Issues"],
+    "yKeys": [
+        {
+            "label": "High",
+            "color": "maroon",
+            "visible": true
+        },
+        {
+            "label": "Medium",
+            "color": "steelblue",
+            "visible": true
+            
+        },
+        {
+            "label": "Low",
+            "color": "black",
+            "visible": true           
+        },
+        {
+            "label": "Info",
+            "color": "lightgray",
+            "visible": true            
+        }
+    ],
     "data": [
-        { "date": "1-May-07", "Notifications": 3, "Nefarious Ports": 1, "VPN Issues": 3 },
-        { "date": "2-May-07", "Notifications": 4, "Nefarious Ports": 0, "VPN Issues": 2 },
-        { "date": "3-May-07", "Notifications": 6, "Nefarious Ports": 6, "VPN Issues": 0 },
-        { "date": "4-May-07", "Notifications": 5, "Nefarious Ports": 0, "VPN Issues": 1 },
-        { "date": "5-May-07", "Notifications": 0, "Nefarious Ports": 0, "VPN Issues": 1 },
-        { "date": "6-May-07", "Notifications": 9, "Nefarious Ports": 1, "VPN Issues": 4 },
-        { "date": "7-May-07", "Notifications": 1, "Nefarious Ports": 3, "VPN Issues": 0 },
-        { "date": "8-May-07", "Notifications": 2, "Nefarious Ports": 5, "VPN Issues": 2 },
-        { "date": "9-May-07", "Notifications": 7, "Nefarious Ports": 2, "VPN Issues": 1 }
+        { "date": "01-01-2018", "High": 3, "Medium": 1, "Low": 3, "Info": 1 },
+        { "date": "01-02-2018", "High": 4, "Medium": 0, "Low": 2, "Info": 2 },
+        { "date": "01-03-2018", "High": 6, "Medium": 6, "Low": 0, "Info": 3 },
+        { "date": "01-04-2018", "High": 5, "Medium": 0, "Low": 1, "Info": 4 },
+        { "date": "01-05-2018", "High": 0, "Medium": 0, "Low": 1, "Info": 5 },
+        { "date": "01-06-2018", "High": 9, "Medium": 1, "Low": 4, "Info": 6 },
+        { "date": "01-07-2018", "High": 1, "Medium": 3, "Low": 0, "Info": 7 },
+        { "date": "01-08-2018", "High": 2, "Medium": 5, "Low": 2, "Info": 8 },
+        { "date": "01-09-2018", "High": 7, "Medium": 2, "Low": 1, "Info": 9 }
     ]
 }
