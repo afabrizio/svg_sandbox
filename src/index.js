@@ -9,7 +9,7 @@ import favicon from './assets/images/favicon.png';
 
 // stylesheets:
 import './default.scss';
-
+    
 // React Components:
 import { App } from './components/app.component.jsx';
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import dataset1 from './data/dataset1.json';
 import dataset2 from './data/dataset2.json';
+import { Alerts } from './alerts.svg.jsx';
 
 
 import './styles/charts.scss';
@@ -57,6 +58,7 @@ export class InteractiveAreaChart extends React.Component {
         //     this.initializeChart();
         //     this.rerenderChart(true, dataset2);      
         // }, 2000)
+        console.log(this.props.width)
     }
   
     componentWillUnmount() { }
@@ -363,7 +365,7 @@ export class InteractiveAreaChart extends React.Component {
                         dataset.yKeys[i].visible = true;
                 }
                 self.rerenderChart(false, dataset);
-                               
+                self.setState({});
             });
         }));
     }
@@ -372,23 +374,36 @@ export class InteractiveAreaChart extends React.Component {
         return (
             <div name="interactiveArea">
                 <svg id="interactiveArea" width={this.props.width} style={{ border: 'solid 1px black' }}></svg>
-                <div style={{ width: 800, border: 'solid 1px steelblue' }}>
-                    {dataset1.data.map( (row, i) => (
-                        <div className={i === this.state.metadata ? 'active' : ''} key={i}>
-                            <div>
-                                <b>High</b>:&nbsp;{row.High}
+
+                <div style={{ padding: '10px',  width: 800, border: 'solid 1px black' }}>
+                    {this.state.metadata !== undefined ?
+                    <div>
+                        <p>{dataset1.data[this.state.metadata].date.toString()}</p>
+                        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around'}}>
+                            <div key="-1" style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                                <a href="#">{this.computeY(dataset1.data[this.state.metadata], dataset1.yKeys)} Total</a>
+                                <i className="fa fa-chevron-down"></i>
                             </div>
-                            <div>
-                                <b>Medium</b>:&nbsp;{row.Medium}
-                            </div>
-                            <div>
-                                <b>Low</b>:&nbsp;{row.Low}
-                            </div>
-                            <div>
-                                <b>Info</b>:&nbsp;{row.Info}                                
-                            </div>
+                            {
+                            dataset1.yKeys.filter( (key) => key.visible ).map( (key, i) => (
+                                <div key={i} style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
+                                    <a href="#" style={{color: key.color}}>{dataset1.data[this.state.metadata][key.label]}&nbsp;{key.label}</a>
+                                    <i className="fa fa-chevron-down"></i>
+                                </div>
+                            ))
+                            }
                         </div>
-                    ))}
+                        <div style={{display: 'flex', flexDirection: 'row'}}>
+                            <i style={{display: 'inline-flex', alignSelf: 'flex-start'}} className="fa fa-chevron-left fa-2x"></i>
+                            <div>
+                                <Alerts size="50" color="#F27474" duration="2s"></Alerts>
+                            </div>
+                            <i style={{display: 'inline-flex', alignSelf: 'flex-end'}} className="fa fa-chevron-right fa-2x"></i>
+                        </div>
+                    </div>
+                    :
+                    null
+                    }
                 </div>
             </div>
         );

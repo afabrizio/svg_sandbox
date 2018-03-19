@@ -106,9 +106,6 @@ div[name=Header] {
 
 div[name=content] {
     margin-top: 50px;
-    background-color: var(--grey-light)
-}
-
-div.active {
-    background-color: rgba(0, 218, 144, .5);
+    background-color: var(--grey-light);
+    font-size: 10px;
 }

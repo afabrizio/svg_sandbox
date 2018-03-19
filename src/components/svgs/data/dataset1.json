@@ -3,24 +3,24 @@
     "yKeys": [
         {
             "label": "High",
-            "color": "maroon",
+            "color": "red",
             "visible": true
         },
         {
             "label": "Medium",
-            "color": "steelblue",
+            "color": "lightgray",
             "visible": true
             
         },
         {
             "label": "Low",
-            "color": "black",
+            "color": "blue",
             "visible": true           
         },
         {
             "label": "Info",
-            "color": "lightgray",
-            "visible": true            
+            "color": "black",
+            "visible": false            
         }
     ],
     "data": [
