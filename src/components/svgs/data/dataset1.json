@@ -3,18 +3,18 @@
     "yKeys": [
         {
             "label": "High",
-            "color": "red",
+            "color": "#0066ff",
             "visible": true
         },
         {
             "label": "Medium",
-            "color": "lightgray",
+            "color": "#698796",
             "visible": true
             
         },
         {
             "label": "Low",
-            "color": "blue",
+            "color": "#99ccff",
             "visible": true           
         },
         {

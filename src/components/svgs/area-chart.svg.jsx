@@ -1,4 +1,5 @@
 import React from 'react';
+import $ from 'jquery';
 import dataset1 from './data/dataset1.json';
 import dataset2 from './data/dataset2.json';
 import { Alerts } from './alerts.svg.jsx';
@@ -90,7 +91,7 @@ export class InteractiveAreaChart extends React.Component {
         this.state.height = this.props.height - (this.state.margin.top + this.state.margin.bottom);
         
         // sizes the SVG element:
-        this.state.svg = d3Select('#interactiveArea')
+        this.state.svg = d3Select('svg.graph')
             .attr('width', this.props.width)
             .attr('height', this.props.height);
     
@@ -373,32 +374,33 @@ export class InteractiveAreaChart extends React.Component {
     render() {
         return (
             <div name="interactiveArea">
-                <svg id="interactiveArea" width={this.props.width} style={{ border: 'solid 1px black' }}></svg>
-
-                <div style={{ padding: '10px',  width: 800, border: 'solid 1px black' }}>
+                <svg className="graph" width={this.props.width}></svg>
+                <div className="detail" style={{width: this.props.width}}>
                     {this.state.metadata !== undefined ?
                     <div>
-                        <p>{dataset1.data[this.state.metadata].date.toString()}</p>
-                        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-around'}}>
-                            <div key="-1" style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                                <a href="#">{this.computeY(dataset1.data[this.state.metadata], dataset1.yKeys)} Total</a>
-                                <i className="fa fa-chevron-down"></i>
-                            </div>
+                        <div className="tabs">
+                            <b className="xValue">{dataset1.data[this.state.metadata].date.toDateString('md')}</b>
+                            <span tabIndex="0" className="selected tab" onClick={() => this.selectTab(0)}>
+                                <span className="count">{this.computeY(dataset1.data[this.state.metadata], dataset1.yKeys)}</span>
+                                <span className="label">Total</span>
+                            </span>
                             {
                             dataset1.yKeys.filter( (key) => key.visible ).map( (key, i) => (
-                                <div key={i} style={{display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}}>
-                                    <a href="#" style={{color: key.color}}>{dataset1.data[this.state.metadata][key.label]}&nbsp;{key.label}</a>
-                                    <i className="fa fa-chevron-down"></i>
-                                </div>
+                                <span key={i+1} tabIndex={i+1} className="tab" onClick={() => this.selectTab(i+1)}>
+                                    <span className="count" style={{color: key.color}}>{dataset1.data[this.state.metadata][key.label]}</span>
+                                    <span className="label">{key.label}</span>
+                                </span>
                             ))
                             }
+                            <span className="spacer"></span>                            
                         </div>
-                        <div style={{display: 'flex', flexDirection: 'row'}}>
-                            <i style={{display: 'inline-flex', alignSelf: 'flex-start'}} className="fa fa-chevron-left fa-2x"></i>
-                            <div>
+                        <div className="tabContent">
+                            <i className="left bumper fa fa-chevron-left fa-2x"></i>
+                            <div className="alert">
                                 <Alerts size="50" color="#F27474" duration="2s"></Alerts>
+                                <p>Content: Content</p>
                             </div>
-                            <i style={{display: 'inline-flex', alignSelf: 'flex-end'}} className="fa fa-chevron-right fa-2x"></i>
+                            <i className="right bumper fa fa-chevron-right fa-2x"></i>
                         </div>
                     </div>
                     :
@@ -407,5 +409,12 @@ export class InteractiveAreaChart extends React.Component {
                 </div>
             </div>
         );
+    }
+
+    selectTab(index) {
+        $('.tab')
+            .removeClass('selected');
+        $('[tabIndex="' + index + '"]')
+            .addClass('selected');
     }
 }

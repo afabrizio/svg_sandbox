@@ -17,7 +17,7 @@ export class Content extends React.Component {
     render() {
         return (
             <div name="content">
-                <InteractiveAreaChart width="800" height="250" />
+                <InteractiveAreaChart width="600" height="150" />
             </div>
         );
     }
