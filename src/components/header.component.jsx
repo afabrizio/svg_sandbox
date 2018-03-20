@@ -5,14 +5,18 @@ export class Header extends React.Component {
         super(props);
 
         this.state = {
-            activeNav: 0,
+            navIndex: this.props.navIndex,
             navs: [
                 {
-                    name: "Line",
+                    name: "Chart",
                     href: "#"
                 },
                 {
-                    name: "Scatter",
+                    name: "V-Widget",
+                    href: "#"
+                },
+                {
+                    name: "H-Widget",
                     href: "#"
                 },
             ]
@@ -25,10 +29,11 @@ export class Header extends React.Component {
     componentWillUnmount() {
     }
 
-    navigate(index) {
+    navChange(index) {
         this.setState({
-            activeNav: index
+            navIndex: index
         });
+        this.props.navChange(index);        
     }
 
     render() {
@@ -37,7 +42,7 @@ export class Header extends React.Component {
                 <div className="inner">
                     <b className="app-name">SVG Sandbox</b>
                     <nav className="clickable">
-                        { this.state.navs.map( (nav, i) => <a className={i == this.state.activeNav ? "active" : ""} href={nav.href} onClick={() => this.navigate(i)} key={i}>{nav.name}</a> ) }
+                        { this.state.navs.map( (nav, i) => <a className={i == this.state.navIndex ? "active" : ""} href={nav.href} onClick={() => this.navChange(i)} key={i}>{nav.name}</a> ) }
                     </nav>
                 </div>
             </div>

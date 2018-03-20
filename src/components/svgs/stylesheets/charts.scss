@@ -15,7 +15,6 @@ div[name="interactiveArea"] {
         border-bottom: solid 1px #ccc;
         flex: 1;
         padding: 5px 10px;
-        // overflow: hidden; 
         text-overflow: ellipsis;  
     }
 
@@ -27,7 +26,7 @@ div[name="interactiveArea"] {
         display: flex;
         flex: 1;
         flex-direction: column;
-        padding: 2px 10px;
+        padding: 4px 10px;
         text-align: center;
 
         &:hover {
@@ -42,7 +41,7 @@ div[name="interactiveArea"] {
         }
 
         span.count {
-            font-size: 1.5em;
+            font-size: 20px;
         }
 
         span.label {

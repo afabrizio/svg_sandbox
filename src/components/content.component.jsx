@@ -1,11 +1,10 @@
 import React from 'react';
 import { InteractiveAreaChart } from './svgs/area-chart.svg.jsx';
+import { HorizontalWidget, VerticalWidget } from './widget.component.jsx';
 
 export class Content extends React.Component {
     constructor(props) {
         super(props);
-
-        this.state = { }
     }
 
     componentDidMount() {
@@ -17,8 +16,19 @@ export class Content extends React.Component {
     render() {
         return (
             <div name="content">
-                <InteractiveAreaChart width="600" height="150" />
+                {this.renderContent()}
             </div>
         );
+    }
+
+    renderContent() {
+        switch (this.props.navIndex) {
+            case 0:
+                return <InteractiveAreaChart width="800" height="250" />;
+            case 1:
+                return <VerticalWidget />
+            case 2:
+                return <HorizontalWidget />
+        }
     }
 }

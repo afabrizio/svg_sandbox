@@ -5,7 +5,7 @@ import dataset2 from './data/dataset2.json';
 import { Alerts } from './alerts.svg.jsx';
 
 
-import './styles/charts.scss';
+import './stylesheets/charts.scss';
 
 import {
     area as d3Area,
@@ -59,7 +59,6 @@ export class InteractiveAreaChart extends React.Component {
         //     this.initializeChart();
         //     this.rerenderChart(true, dataset2);      
         // }, 2000)
-        console.log(this.props.width)
     }
   
     componentWillUnmount() { }
