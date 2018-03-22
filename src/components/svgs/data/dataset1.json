@@ -2,36 +2,36 @@
     "xKey": "date",
     "yKeys": [
         {
-            "label": "High",
-            "color": "#0066ff",
+            "label": "ALERT",
+            "color": "rgb(255, 153, 153)",
             "visible": true
         },
         {
-            "label": "Medium",
-            "color": "#698796",
+            "label": "WARN",
+            "color": "rgb(255, 204, 153)",
             "visible": true
             
         },
         {
-            "label": "Low",
-            "color": "#99ccff",
+            "label": "INFO",
+            "color": "rgb(153, 230, 255)",
             "visible": true           
         },
         {
-            "label": "Info",
-            "color": "black",
+            "label": "OTHER",
+            "color": "rgb(153, 179, 255)",
             "visible": false            
         }
     ],
     "data": [
-        { "date": "01-01-2018", "High": 3, "Medium": 1, "Low": 3, "Info": 1 },
-        { "date": "01-02-2018", "High": 4, "Medium": 0, "Low": 2, "Info": 2 },
-        { "date": "01-03-2018", "High": 6, "Medium": 6, "Low": 0, "Info": 3 },
-        { "date": "01-04-2018", "High": 5, "Medium": 0, "Low": 1, "Info": 4 },
-        { "date": "01-05-2018", "High": 0, "Medium": 0, "Low": 1, "Info": 5 },
-        { "date": "01-06-2018", "High": 9, "Medium": 1, "Low": 4, "Info": 6 },
-        { "date": "01-07-2018", "High": 1, "Medium": 3, "Low": 0, "Info": 7 },
-        { "date": "01-08-2018", "High": 2, "Medium": 5, "Low": 2, "Info": 8 },
-        { "date": "01-09-2018", "High": 7, "Medium": 2, "Low": 1, "Info": 9 }
+        { "date": "01-01-2018", "ALERT": 3, "WARN": 1, "INFO": 3, "OTHER": 1 },
+        { "date": "01-02-2018", "ALERT": 4, "WARN": 0, "INFO": 2, "OTHER": 2 },
+        { "date": "01-03-2018", "ALERT": 6, "WARN": 6, "INFO": 0, "OTHER": 3 },
+        { "date": "01-04-2018", "ALERT": 5, "WARN": 0, "INFO": 1, "OTHER": 4 },
+        { "date": "01-05-2018", "ALERT": 0, "WARN": 0, "INFO": 1, "OTHER": 5 },
+        { "date": "01-06-2018", "ALERT": 9, "WARN": 1, "INFO": 4, "OTHER": 6 },
+        { "date": "01-07-2018", "ALERT": 1, "WARN": 3, "INFO": 0, "OTHER": 7 },
+        { "date": "01-08-2018", "ALERT": 2, "WARN": 5, "INFO": 2, "OTHER": 8 },
+        { "date": "01-09-2018", "ALERT": 7, "WARN": 2, "INFO": 1, "OTHER": 9 }
     ]
 }

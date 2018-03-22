@@ -1,0 +1,92 @@
+div[name=alert] {
+    border: solid 1px black;
+    border-radius: 5px;
+    background-color: #333;    
+    color: white;
+    display: inline-flex;
+    font-family: 'Inconsolata';     
+    font-size: 12px;    
+    height: 200px;
+    position: relative;
+    width: 400px;
+
+    div[name=sandbox] {
+        display: inline-block;
+    }
+
+    div.header {
+        align-items: center;
+        background-color: #1e1e1e;
+        border-bottom: solid 1px #444;
+        display: flex;
+        padding: 5px 10px;
+        position: absolute;
+        top: 0;
+        height: 50px;
+        width: calc(100% - 20px);
+
+        div.title {
+            display: inline-block;
+            letter-spacing: 1px;
+
+            div.type {
+                font-size: 14px;                            
+                font-weight: bold;
+                margin: 5px;
+                text-transform: uppercase;
+            }
+
+            div.source {
+                font-style: italic;
+                margin: 0 5px;                
+            }
+        }
+    }
+
+    div.content {
+        background-color: #333;
+        margin-top: 50px + 10px;
+        overflow-y: scroll;     
+        padding: 5px 10px;
+        width: 100%;        
+        
+        div.timestamp {
+            span.date {
+                color: #ccffcc;
+                float: left;
+            }
+
+            span.time {
+                color: #ccffcc;                
+                float: right
+            }
+        }
+
+        table.metadata {
+            border-spacing: 0 10px;
+            margin: 10px 0;
+            width: 100%;            
+            
+            tr.pair {
+                border: none;
+                vertical-align: top;
+                
+                &:nth-child(odd) {
+                    background-color: rgba(255, 255, 255, .05);
+                }
+                
+                td.key {
+                    color: #9cdcfe;
+                    max-width: 50%;
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+
+                td.value {
+                    padding-left: 10px;
+                    white-space: normal;                    
+                }
+            }
+        }
+    }
+}

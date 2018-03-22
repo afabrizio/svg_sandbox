@@ -1,91 +1,145 @@
 div[name="interactiveArea"] {
     border: solid 1px black;
+    margin: 100px auto;
     padding-top: 20px;
-    display: inline-block;
-}
+    width: calc(100% - 40px);
 
-.tabs {
-    background-color: transparent;    
-    box-sizing: border-box;
-    display: flex;
-    line-height: 20px;
-
-    .xValue,
-    .spacer {
-        border-bottom: solid 1px #ccc;
-        flex: 1;
-        padding: 5px 10px;
-        text-overflow: ellipsis;  
-    }
-
-    .tab {
-        background-color: transparent;        
-        border: solid 1px #ccc;
-        border-top-right-radius: 5px;
-        border-top-left-radius: 5px; 
-        display: flex;
-        flex: 1;
-        flex-direction: column;
-        padding: 4px 10px;
+    div.graph {
         text-align: center;
-
-        &:hover {
-            background-color: #ccc;
-            border-top-right-radius: 5px;
-            border-top-left-radius: 5px;  
-        }
-
-        &.selected {
-            background-color: white;
-            border-bottom: solid 1px white;
-        }
-
-        span.count {
-            font-size: 20px;
-        }
-
-        span.label {
-
-        }
-    }
-}
-
-.tabContent {
-    background-color: white;
-    display: flex;
-    flex-direction: row;
-    position: relative;
-    text-align: center;
-
-    .alert {
-        max-width: 75%;
-        margin: 0 auto;
     }
 
-    .bumper {
-        background-color:rgba(182, 182, 182, .1); 
-        display: block;
-        height: 100%;
-        padding: 0 10px;
-        position: absolute;
-
-        &:hover {
-            background-color: rgba(182, 182, 182, .25);
-            cursor: pointer;
+    div.detail {
+        .tabs {
+            background-color: transparent;    
+            display: flex;
+            line-height: 20px;
+        
+            .xValue,
+            .spacer {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                font-size: 14px;
+                justify-content: space-around;
+                padding: 5px 10px;
+                text-align: center;
+            }
+        
+            .tab {
+                background: linear-gradient(transparent, rgba(0, 0, 0, .2)); 
+                border: solid 1px #999;
+                border-bottom: none;
+                border-top-right-radius: 5px;
+                border-top-left-radius: 5px;
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                margin: 0 2px;
+                padding: 5px 10px;
+                text-align: center;
+        
+                &:hover {
+                    background-color: #d9d9d9; 
+                }
+        
+                &.selected {
+                    background: linear-gradient(#d9d9d9, rgba(0, 0, 0, .2), #d9d9d9); 
+                    transform: translateY(1px);
+                }
+        
+                span.count {
+                    font-size: 20px;
+                }
+        
+                span.label {
+                    background-color: white;
+                    border-radius: 2px;
+                }
+            }
         }
-
-        &:active {
-            background-color: rgba(182, 182, 182, .5);
+        
+        .tabContent {
+        
+            div.horizontal-slider {
+                background-color: #d9d9d9;
+                border: solid 1px #999;
+                color: white;
+                display: flex;
+                
+                ul {
+                    display: inline-flex;
+                    flex-grow: 1;                    
+                    list-style: none;
+                    margin: 0 10px !important;
+                    overflow-x: scroll;
+                    overflow-y: hidden;
+                    padding: 0;
+                    text-indent: 0;
+                    white-space: nowrap;
+            
+                    li {
+                        border-radius: 5px;
+                        box-shadow: 0 0 5px black;                                                                            
+                        display: inline-block;
+                        margin: 20px 20px;
+            
+                        span {
+                            &.priority {
+                                font-weight: bold;
+                                letter-spacing: 1px;
+                                padding-right: 10px;                   
+                                text-transform: uppercase;
+                            }
+                            
+                            &.time {
+                                color: #ccffcc;
+                                padding-right: 10px;                                       
+                            }
+            
+                            &.date {
+                                color: #ccffcc;                    
+                            }
+                        }
+            
+                        &:hover,
+                        &.selected {
+                            box-shadow: 0 0 8px blue;
+                        }
+                    }
+                }
+            
+                button.bumper {
+                    background-color: #999;
+                    border: none;
+                    color: white;
+                    display: inline-flex;
+                    padding: 0 10px;
+                    outline: none;
+            
+                    &.x {
+                        display: flex;
+                        justify-content: space-around;
+                    }
+            
+                    span.y {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-around;
+                    }
+            
+                    &:hover {
+                        cursor: pointer;
+                    }
+            
+                    &:active {
+                        background-color: #777;
+                    }
+            
+                    &[disabled] {
+                        color: gray;
+                    }
+                }
+            }
         }
-    }
-
-    .bumper.right {
-        border-left: dashed 1px #ccc;
-        right: 0;
-    }
-
-    .bumper.left {
-        border-right: dashed 1px #ccc;        
-        left: 0;
     }
 }

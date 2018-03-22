@@ -62,12 +62,13 @@ div[name="horizontal-widget"] {
     cursor: pointer;
     display: flex;
     font-family: 'Inconsolata';
-    font-size: 10px;
+    font-size: 12px;
     margin: 100px auto;
-    width: 800px;
+    width: calc(100% - 40px);
 
     ul {
         display: inline-flex;
+        flex-grow: 1;
         list-style: none;
         margin: 0 10px !important;
         overflow-x: scroll;
@@ -113,9 +114,8 @@ div[name="horizontal-widget"] {
         display: inline-flex;
         padding: 0 10px;
 
-        &.x {
+        &.x {            
             display: flex;
-            justify-content: space-around;
         }
 
         span.y {

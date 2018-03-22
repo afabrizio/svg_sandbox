@@ -45,9 +45,9 @@ export class HorizontalWidget extends React.Component {
         );
     }
 
-    scrollTo(index) {        
+    scrollTo(index) {   
         let requestedAlert = document.getElementById('alert' + index);
-        
+
         if (requestedAlert) {
             // updates class values:
             for (let alert of document.getElementsByClassName('alert')) {
@@ -89,7 +89,7 @@ export class HorizontalWidget extends React.Component {
                     next = 0;
             }
             this.scrollTo(next);
-        }, 5000);
+        }, 1000);
     }
 
     stopAnimation() {

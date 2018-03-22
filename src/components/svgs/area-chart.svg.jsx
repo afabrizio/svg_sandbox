@@ -1,12 +1,5 @@
 import React from 'react';
 import $ from 'jquery';
-import dataset1 from './data/dataset1.json';
-import dataset2 from './data/dataset2.json';
-import { Alerts } from './alerts.svg.jsx';
-
-
-import './stylesheets/charts.scss';
-
 import {
     area as d3Area,
     axisBottom,
@@ -26,6 +19,15 @@ import {
     stackOffsetNone,
     timeFormat as d3TimeFormat
 } from 'd3';
+
+import dataset1 from './data/dataset1.json';
+import alerts from '../alerts.json';
+import dataset2 from './data/dataset2.json';
+
+import './stylesheets/charts.scss';
+import '../stylesheets/alert.scss';
+
+import { Alert } from '../alert.component.jsx';
 
 export class InteractiveAreaChart extends React.Component {
     constructor(props) {
@@ -48,13 +50,19 @@ export class InteractiveAreaChart extends React.Component {
             xAxis: undefined,
             y: undefined,
             yAxis: undefined,
-            metadata: undefined
+            
+            metadata: undefined,
+            selectedAlert: -1,
         }
     }
 
     componentDidMount() {
         this.initializeChart();
         this.rerenderChart(true, dataset1);
+        // this.setState({metadata: 0});
+
+        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
+        
         // setTimeout( () => {
         //     this.initializeChart();
         //     this.rerenderChart(true, dataset2);      
@@ -90,7 +98,7 @@ export class InteractiveAreaChart extends React.Component {
         this.state.height = this.props.height - (this.state.margin.top + this.state.margin.bottom);
         
         // sizes the SVG element:
-        this.state.svg = d3Select('svg.graph')
+        this.state.svg = d3Select('svg[svg="stackedArea"]')
             .attr('width', this.props.width)
             .attr('height', this.props.height);
     
@@ -230,7 +238,7 @@ export class InteractiveAreaChart extends React.Component {
         this.state.focus.append('circle') 
             .attr('circle', 'focus')
             .style('fill', 'none') 
-            .style('stroke', 'blue')
+            .style('stroke', 'black')
             .attr('r', 6);
         this.state.focus.append('line')
             .attr('line', 'xFocus')
@@ -240,7 +248,7 @@ export class InteractiveAreaChart extends React.Component {
             .attr('y2', this.state.height);
         this.state.focus.append('line')
             .attr('line', 'xFocus')
-            .style('stroke', 'blue')
+            .style('stroke', 'black')
             .style('stroke-dasharray', '3,3')
             .style('opacity', 0.5)
             .attr('y1', 0)
@@ -253,7 +261,7 @@ export class InteractiveAreaChart extends React.Component {
             .attr('x2', this.state.width);
         this.state.focus.append('line')
             .attr('line', 'yFocus')        
-            .style('stroke', 'blue')
+            .style('stroke', 'black')
             .style('stroke-dasharray', '3,3')
             .style('opacity', 0.5)
             .attr('x1', this.state.width)
@@ -326,7 +334,7 @@ export class InteractiveAreaChart extends React.Component {
             let position = {
                 start: layer.index * (self.state.width / self.state.stackedData.length),
                 offset: (self.state.width / self.state.stackedData.length) / 2,
-                spacing: 10
+                spacing: 12
             };
             let key = this.state.legend
                 .append('g')
@@ -336,7 +344,7 @@ export class InteractiveAreaChart extends React.Component {
                 .style('cursor', 'pointer');
             key.append('circle')
                 .attr('circle', layer.key)
-                .attr('r', 5)
+                .attr('r', 6)
                 .attr('cx', position.start + position.offset)
                 .attr('cy', self.state.margin.top / 2)                
                 .attr('stroke', 'black')
@@ -347,7 +355,7 @@ export class InteractiveAreaChart extends React.Component {
                 .attr('text', 'key')
                 .attr('font-size', 10)
                 .attr('dx', position.start + position.offset + position.spacing)
-                .attr('dy', (self.state.margin.top / 2) + 3)
+                .attr('dy', (self.state.margin.top / 2) + 4)
                 .text(layer.key);
             key.on('click', function() {
                 let key = d3Select(this);
@@ -373,33 +381,47 @@ export class InteractiveAreaChart extends React.Component {
     render() {
         return (
             <div name="interactiveArea">
-                <svg className="graph" width={this.props.width}></svg>
+                <div className="graph">
+                    <svg svg="stackedArea" width={this.props.width}></svg>
+                </div>
                 <div className="detail" style={{width: this.props.width}}>
                     {this.state.metadata !== undefined ?
                     <div>
                         <div className="tabs">
-                            <b className="xValue">{dataset1.data[this.state.metadata].date.toDateString('md')}</b>
+                            <span className="xValue">{dataset1.data[this.state.metadata].date.toDateString('md')}</span>
                             <span tabIndex="0" className="selected tab" onClick={() => this.selectTab(0)}>
                                 <span className="count">{this.computeY(dataset1.data[this.state.metadata], dataset1.yKeys)}</span>
-                                <span className="label">Total</span>
+                                <span className="label">TOTAL</span>
                             </span>
                             {
                             dataset1.yKeys.filter( (key) => key.visible ).map( (key, i) => (
                                 <span key={i+1} tabIndex={i+1} className="tab" onClick={() => this.selectTab(i+1)}>
-                                    <span className="count" style={{color: key.color}}>{dataset1.data[this.state.metadata][key.label]}</span>
-                                    <span className="label">{key.label}</span>
+                                    <span className="count">{dataset1.data[this.state.metadata][key.label]}</span>
+                                    <span className="label" style={{backgroundColor: key.color}}>{key.label}</span>
                                 </span>
                             ))
                             }
                             <span className="spacer"></span>                            
                         </div>
+                        
                         <div className="tabContent">
-                            <i className="left bumper fa fa-chevron-left fa-2x"></i>
-                            <div className="alert">
-                                <Alerts size="50" color="#F27474" duration="2s"></Alerts>
-                                <p>Content: Content</p>
+                            <div className="horizontal-slider">
+                                <button className="bumper x" onClick={() => this.scrollTo(this.state.selectedAlert - 1)} disabled={this.state.selectedAlert <= 0 ? true : false}>
+                                    <span className="y">
+                                        <i className="fa fa-chevron-left"></i>
+                                    </span>
+                                </button>
+                                <ul className="alerts">{alerts.map( (alert, i) => (
+                                    <li id={'alert' + i} key={i} className="alert" onClick={() => this.scrollTo(i)}>
+                                        <Alert alert={alert} key={i} />
+                                    </li>
+                                ))}</ul>
+                                <button className="bumper x" onClick={() => this.scrollTo(this.state.selectedAlert + 1)} disabled={(this.state.selectedAlert >= (alerts.length-1)) ? true : false}>
+                                    <span className="y">
+                                        <i className="fa fa-chevron-right"></i>
+                                    </span>
+                                </button>
                             </div>
-                            <i className="right bumper fa fa-chevron-right fa-2x"></i>
                         </div>
                     </div>
                     :
@@ -408,6 +430,39 @@ export class InteractiveAreaChart extends React.Component {
                 </div>
             </div>
         );
+    }
+
+    scrollTo(index) {        
+        let requestedAlert = document.getElementById('alert' + index);
+        
+        if (requestedAlert) {
+            // updates class values:
+            for (let alert of document.getElementsByClassName('alert')) {
+                alert.classList.remove('selected')
+            }
+            requestedAlert.classList.add('selected');
+            // determines scroll positioning:
+            let positioning;
+            switch (true) {
+                case (index < 1):
+                    positioning = 'start';
+                    break;
+                case (index >= (alerts.length-1)):
+                    positioning = 'end';
+                    break;
+                default:
+                    positioning = 'center';
+            }
+            // initiates scroll animation and updates state:         
+            requestedAlert.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: positioning
+            });
+            this.setState({
+                selectedAlert: index
+            });
+        }
     }
 
     selectTab(index) {
