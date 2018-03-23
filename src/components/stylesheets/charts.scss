@@ -65,6 +65,7 @@ div[name="interactiveArea"] {
                 border: solid 1px #999;
                 color: white;
                 display: flex;
+                height: 244px;
                 
                 ul {
                     display: inline-flex;
@@ -79,7 +80,6 @@ div[name="interactiveArea"] {
             
                     li {
                         border-radius: 5px;
-                        box-shadow: 0 0 5px black;                                                                            
                         display: inline-block;
                         margin: 20px 20px;
             
@@ -103,7 +103,7 @@ div[name="interactiveArea"] {
             
                         &:hover,
                         &.selected {
-                            box-shadow: 0 0 8px blue;
+                            box-shadow: 0 0 20px black;;
                         }
                     }
                 }

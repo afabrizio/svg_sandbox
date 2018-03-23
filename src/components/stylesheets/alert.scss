@@ -17,6 +17,8 @@ div[name=alert] {
     div.header {
         align-items: center;
         background-color: #1e1e1e;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;        
         border-bottom: solid 1px #444;
         display: flex;
         padding: 5px 10px;
@@ -45,6 +47,8 @@ div[name=alert] {
 
     div.content {
         background-color: #333;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
         margin-top: 50px + 10px;
         overflow-y: scroll;     
         padding: 5px 10px;

@@ -1,0 +1,20 @@
+[
+    {
+        "label": "ALERT",
+        "color": "rgb(255, 153, 153)",
+        "zIndex": 0,
+        "visible": true
+    },
+    {
+        "label": "WARN",
+        "color": "rgb(255, 204, 153)",
+        "zIndex": 1,
+        "visible": true
+    },
+    {
+        "label": "INFO",
+        "color": "rgb(153, 230, 255)",
+        "zIndex": 2,
+        "visible": true           
+    }
+]

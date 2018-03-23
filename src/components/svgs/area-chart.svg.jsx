@@ -17,15 +17,16 @@ import {
     stack as d3Stack,
     stackOrderNone,
     stackOffsetNone,
+    timeDay as d3TimeDay,
     timeFormat as d3TimeFormat
 } from 'd3';
 
-import dataset1 from './data/dataset1.json';
-import alerts from '../alerts.json';
-import dataset2 from './data/dataset2.json';
-
-import './stylesheets/charts.scss';
+import '../stylesheets/charts.scss';
 import '../stylesheets/alert.scss';
+
+import alerts from '../data/alerts/alerts.json';
+import { prepareData } from '../data/alerts/prepare.js';
+import yKeys from '../data/alerts/yKeys.json';
 
 import { Alert } from '../alert.component.jsx';
 
@@ -34,9 +35,10 @@ export class InteractiveAreaChart extends React.Component {
         super(props);
 
         this.state = {
+            // svg
             area: undefined,
             container: undefined,
-            data: undefined,
+            dataset: undefined,
             focus: undefined,
             height: undefined,
             layer: undefined,
@@ -50,23 +52,18 @@ export class InteractiveAreaChart extends React.Component {
             xAxis: undefined,
             y: undefined,
             yAxis: undefined,
-            
-            metadata: undefined,
+            // focus
+            selectedAlerts: [],
+            selectedTab: 0,
+            selectedDate: undefined,
             selectedAlert: -1,
         }
     }
 
     componentDidMount() {
         this.initializeChart();
-        this.rerenderChart(true, dataset1);
-        // this.setState({metadata: 0});
-
-        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
-        
-        // setTimeout( () => {
-        //     this.initializeChart();
-        //     this.rerenderChart(true, dataset2);      
-        // }, 2000)
+        this.rerenderChart(true, alerts);
+        // let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
     }
   
     componentWillUnmount() { }
@@ -75,7 +72,7 @@ export class InteractiveAreaChart extends React.Component {
         return yKeys
             .filter( (key) => key.visible )
             .map( (key) => key.label )
-            .reduce( (accumulator, key) => accumulator += d[key], 0 );
+            .reduce( (accumulator, key) => accumulator += d[key].length, 0 );
     }
 
     initializeChart() {
@@ -115,59 +112,64 @@ export class InteractiveAreaChart extends React.Component {
             .attr('transform', 'translate(' + this.state.margin.left + ', 0)')
     }
 
-    rerenderChart(complete, dataset) {
+    rerenderChart(complete, alerts) {
         let self = this;
-
-        // converts date strings to date objects
-        this.state.data = dataset.data.map( (row) => {
-            row[dataset.xKey] = new Date(row[dataset.xKey]);
-            return row
-        });
-
-        // computes the stacked data:
-        this.state.stackedData = (d3Stack()
-            .keys(dataset.yKeys.filter( (key) => key.visible ).map( (key) => key.label ))
-            .order(stackOrderNone)
-            .offset(stackOffsetNone)
-        )(dataset.data)
-
+        if (complete) {
+            this.state.dataset = prepareData(alerts, 'date', yKeys);
+        }
+        if (!this.state.dataset) return;
+        
         // remove old elements:
         this.state.container.selectAll('*').remove();
 
+        // computes the stacked data:
+        this.state.stackedData = (d3Stack()
+            .keys(this.state.dataset.yKeys.filter( (key) => key.visible ).map( (key) => key.label ))
+            .value( (d, key) => d[key].length )
+            .order(stackOrderNone)
+            .offset(stackOffsetNone)
+        )(this.state.dataset.data)
+
         // defines axis translator functions (value => pixel location):
+        let minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
+        let maxDate = d3Max(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
         this.state.x = scaleTime()
-            .domain([
-                d3Min(this.state.data, (d) => d[dataset.xKey]),
-                d3Max(this.state.data, (d) => d[dataset.xKey])
-            ])
+            .domain([minDate, maxDate])
             .range([0, this.state.width]);
         this.state.y = scaleLinear()
             .domain([
                 0,
                 d3Max(
-                    this.state.data,
-                    (d) => self.computeY(d, dataset.yKeys)
+                    this.state.dataset.data,
+                    (d) => self.computeY(d, this.state.dataset.yKeys)
                 )
             ])
             .range([this.state.height, 0]);
 
         // defines area transform function:
         this.state.area = d3Area()
-            .x( (d, i) => this.state.x(d.data[dataset.xKey]) )
+            .x( (d) => this.state.x(d.data[self.state.dataset.xKey]) )
             .y0( (d) => self.state.y(d[0]) )
             .y1( (d) => self.state.y(d[1]) );
 
         // defines the line transform function:
         this.state.line = d3Line()
-            .x( (d) => self.state.x(d.data[dataset.xKey]) )
+            .x( (d) => self.state.x(d.data[self.state.dataset.xKey]) )
             .y( (d) => self.state.y(d[1]) );
 
         // defines axis generator functions:
+        let numDays = Math.max(1, (maxDate - minDate) / (1000*60*60*24) );
+        let maxTicks = this.state.width / 50;
         this.state.xAxis = axisBottom(this.state.x)
             .tickFormat(d3TimeFormat('%b %d'))
+            .ticks(
+                d3TimeDay.every( 
+                    (numDays <= maxTicks) ? 1 : Math.ceil(numDays / maxTicks)
+                )
+            );
         this.state.yAxis = axisLeft(this.state.y)
             .ticks(
-                Math.max(4, Math.floor(this.props.height/50))
+                Math.max(4, Math.floor(this.state.height / 50))
             );
 
         // adds axis to SVG:
@@ -193,7 +195,7 @@ export class InteractiveAreaChart extends React.Component {
                 .attr('class', 'layer');
         
         if (complete) {
-            this.renderChartLegend(dataset)
+            this.renderChartLegend(this.state.dataset)
         }
 
         // appends the point circles and layer line traces:
@@ -202,7 +204,7 @@ export class InteractiveAreaChart extends React.Component {
             d3Select('[layer="' + layer.key + '"]')
                 .append('path')
                 .attr('path', 'area')
-                .style('fill', (d) => dataset.yKeys[dataset.yKeys.findIndex( (key) => key.label === layer.key) ].color )
+                .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === layer.key) ].color )
                 .attr('d', self.state.area)
                 .attr('opacity', .75);
 
@@ -222,7 +224,7 @@ export class InteractiveAreaChart extends React.Component {
                     .append('circle')
                     .attr('circle', 'dataPoint')                        
                     .attr('r', (self.state.stackedData.length - layer.index > 1) ? 2 : 2)
-                    .attr('cx', self.state.x(datapoint.data[dataset.xKey]))
+                    .attr('cx', self.state.x(datapoint.data[self.state.dataset.xKey]))
                     .attr('cy', self.state.y(datapoint[1]))                
                     .attr('stroke', 'black')
                     .attr('stroke-width', '1px')
@@ -297,28 +299,28 @@ export class InteractiveAreaChart extends React.Component {
             // }) 
             .on('mousemove', function() {
                 let x0 = self.state.x.invert(d3Mouse(this)[0]);
-                let bisectDate = bisector( (d) => d[dataset.xKey] ).left;
-                let i = bisectDate(dataset.data, x0, 1);
-                let d0 = dataset.data[i-1];
-                let d1 = dataset.data[i];
-                let d = (x0 - d0[dataset.xKey] > d1[dataset.xKey] - x0) ? d1 : d0;
-                self.state.metadata = (x0 - d0[dataset.xKey] > d1[dataset.xKey] - x0) ? i : i-1;
+                let bisectDate = bisector( (d) => d[self.state.dataset.xKey] ).left;
+                let i = bisectDate(self.state.dataset.data, x0, 1);
+                let d0 = self.state.dataset.data[i-1];
+                let d1 = self.state.dataset.data[i];
+                let d = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? d1 : d0;
+                self.state.selectedDate = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? i : i-1;
                 self.setState({});
 
                 self.state.focus.select('[circle="focus"]')
-                    .attr('transform', 'translate(' + self.state.x(d[dataset.xKey]) + ',' + self.state.y(self.computeY(d, dataset.yKeys)) + ')');
+                    .attr('transform', 'translate(' + self.state.x(d[self.state.dataset.xKey]) + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')');
 
                 self.state.focus.selectAll('[line="xFocus"]')
-                    .attr('transform', 'translate(' + self.state.x(d[dataset.xKey]) + ',' + self.state.y(self.computeY(d, dataset.yKeys)) + ')')
-                    .attr('y2', self.state.height - self.state.y(self.computeY(d, dataset.yKeys)));
+                    .attr('transform', 'translate(' + self.state.x(d[self.state.dataset.xKey]) + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')')
+                    .attr('y2', self.state.height - self.state.y(self.computeY(d, self.state.dataset.yKeys)));
               
                 self.state.focus.selectAll('[line="yFocus"]')
-                    .attr('transform', 'translate(' + self.state.width * -1 + ',' + self.state.y(self.computeY(d, dataset.yKeys)) + ')')
+                    .attr('transform', 'translate(' + self.state.width * -1 + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')')
                     .attr('x2', self.state.width * 2);
 
                 self.state.focus.selectAll('[text="yFocus"]')
-                    .attr("transform", 'translate(' + self.state.x(d[dataset.xKey]) + ',' + self.state.y(self.computeY(d, dataset.yKeys)) + ')')
-                    .text(self.computeY(d, dataset.yKeys));
+                    .attr("transform", 'translate(' + self.state.x(d[self.state.dataset.xKey]) + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')')
+                    .text(self.computeY(d, self.state.dataset.yKeys));
             });
         console.log(this.state)
     }
@@ -385,18 +387,18 @@ export class InteractiveAreaChart extends React.Component {
                     <svg svg="stackedArea" width={this.props.width}></svg>
                 </div>
                 <div className="detail" style={{width: this.props.width}}>
-                    {this.state.metadata !== undefined ?
+                    {this.state.selectedDate !== undefined ?
                     <div>
                         <div className="tabs">
-                            <span className="xValue">{dataset1.data[this.state.metadata].date.toDateString('md')}</span>
+                            <span className="xValue">{this.state.dataset.data[this.state.selectedDate][this.state.dataset.xKey].toDateString('md')}</span>
                             <span tabIndex="0" className="selected tab" onClick={() => this.selectTab(0)}>
-                                <span className="count">{this.computeY(dataset1.data[this.state.metadata], dataset1.yKeys)}</span>
+                                <span className="count">{this.computeY(this.state.dataset.data[this.state.selectedDate], yKeys)}</span>
                                 <span className="label">TOTAL</span>
                             </span>
                             {
-                            dataset1.yKeys.filter( (key) => key.visible ).map( (key, i) => (
+                            yKeys.filter( (key) => key.visible ).map( (key, i) => (
                                 <span key={i+1} tabIndex={i+1} className="tab" onClick={() => this.selectTab(i+1)}>
-                                    <span className="count">{dataset1.data[this.state.metadata][key.label]}</span>
+                                    <span className="count">{this.state.dataset.data[this.state.selectedDate][key.label].length}</span>
                                     <span className="label" style={{backgroundColor: key.color}}>{key.label}</span>
                                 </span>
                             ))
@@ -411,7 +413,7 @@ export class InteractiveAreaChart extends React.Component {
                                         <i className="fa fa-chevron-left"></i>
                                     </span>
                                 </button>
-                                <ul className="alerts">{alerts.map( (alert, i) => (
+                                <ul className="alerts">{this.state.selectedAlerts.map( (alert, i) => (
                                     <li id={'alert' + i} key={i} className="alert" onClick={() => this.scrollTo(i)}>
                                         <Alert alert={alert} key={i} />
                                     </li>
@@ -470,5 +472,13 @@ export class InteractiveAreaChart extends React.Component {
             .removeClass('selected');
         $('[tabIndex="' + index + '"]')
             .addClass('selected');
+        let self = this;
+        if (index === 0) {
+            yKeys.filter( (key) => key.visible ).forEach( (key) => {
+                console.log(key)
+                self.state.selectedAlerts = self.state.selectedAlerts.concat(self.state.dataset.data[self.state.selectedDate][key.label])
+            })
+            self.state.selectedAlerts = self.state.selectedAlerts.sort( (a, b) => new Date(a.timestamp) > new Date(b.timestamp) );
+        }
     }
 }
