@@ -41,6 +41,10 @@ div[name="interactiveArea"] {
                 &:hover {
                     background-color: #d9d9d9; 
                 }
+
+                &:focus {
+                    outline: none;
+                }
         
                 &.selected {
                     background: linear-gradient(#d9d9d9, rgba(0, 0, 0, .2), #d9d9d9); 
@@ -103,7 +107,7 @@ div[name="interactiveArea"] {
             
                         &:hover,
                         &.selected {
-                            box-shadow: 0 0 20px black;;
+                            box-shadow: 0 0 20px black;
                         }
                     }
                 }

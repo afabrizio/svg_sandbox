@@ -1,6 +1,7 @@
 import React from 'react';
 import './stylesheets/widget.scss';
-import alerts from './alerts.json';
+import alerts from '../components/data/alerts/alerts.json';
+import yKeys from '../components/data/alerts/yKeys.json';
 
 export class HorizontalWidget extends React.Component {
     constructor(props) {
@@ -8,12 +9,16 @@ export class HorizontalWidget extends React.Component {
 
         this.state = {
             animation: undefined,
+            dataset: undefined,
             selectedAlert: -1
         }
     }
 
     componentDidMount() {
+        this.state.dataset = this.prepareAlerts(alerts);
+        this.setState({});
         this.startAnimation();
+        console.log(this.state)
     }
   
     componentWillUnmount() {
@@ -22,17 +27,18 @@ export class HorizontalWidget extends React.Component {
 
     render() {
         return (
+        this.state.dataset ?
             <div name="horizontal-widget" onMouseEnter={() => this.stopAnimation()} onMouseLeave={() => this.startAnimation()}>
                 <button className="bumper x" onClick={() => this.scrollTo(this.state.selectedAlert - 1)} disabled={this.state.selectedAlert <= 0 ? true : false}>
                     <span className="y">
                         <i className="fa fa-chevron-left"></i>
                     </span>
                 </button>
-                <ul className="alerts">{alerts.map( (alert, i) => (
-                    <li id={'alert' + i} key={i} className="alert" onClick={() => this.scrollTo(i)}>
-                        <span className="priority" style={{color: this.translatePriority(alert.priority).color}}>{this.translatePriority(alert.priority).label}</span>
-                        <span className="time">{(new Date(alert.timestamp)).toLocaleTimeString()}</span>
-                        <span className="date">{(new Date(alert.timestamp)).toDateString()}</span>
+                <ul className="alerts">{this.state.dataset.map( (alert, i) => (
+                    <li alert={i} key={i} className="alert" onClick={() => this.scrollTo(i)}>
+                        <span className="priority" style={{color: alert.priority.color}}>{alert.priority.label}</span>
+                        <span className="time">{alert.date.toLocaleTimeString()}</span>
+                        <span className="date">{alert.date.toDateString()}</span>
                         <div className="type">{alert.type}</div>
                     </li>
                 ))}</ul>
@@ -42,11 +48,30 @@ export class HorizontalWidget extends React.Component {
                     </span>
                 </button>
             </div>
-        );
+        : null);
+    }
+
+    prepareAlerts(alerts) {
+        return alerts
+            .map( (alert) => {
+                alert.date = new Date(alert.timestamp);
+                switch (alert.priority.severity) {
+                    case 1:
+                        alert.priority.color = 'rgb(255, 51, 51)';
+                        break;
+                    case 2:
+                        alert.priority.color = 'rgb(255, 255, 153)';
+                        break;
+                    default:
+                        alert.priority.color = 'rgb(153, 204, 255)';
+                }
+                return alert;
+            })
+            .sort( (a, b) => a.date > b.date );
     }
 
     scrollTo(index) {   
-        let requestedAlert = document.getElementById('alert' + index);
+        let requestedAlert = document.querySelector('[alert="' + index + '"]');
 
         if (requestedAlert) {
             // updates class values:
@@ -89,31 +114,11 @@ export class HorizontalWidget extends React.Component {
                     next = 0;
             }
             this.scrollTo(next);
-        }, 1000);
+        }, 5000);
     }
 
     stopAnimation() {
         window.clearInterval(this.state.animation);
-    }
-
-    translatePriority(priority) {
-        switch (priority) {
-            case 1:
-                return {
-                    label: 'high',
-                    color: 'rgb(255, 51, 51)'
-                };
-            case 2:
-                return {
-                    label: 'warn',
-                    color: 'rgb(255, 255, 153)'
-                };
-            case 3:
-                return {
-                    label: 'info',
-                    color: 'rgb(153, 204, 255)'
-                };
-        }
     }
 }
 

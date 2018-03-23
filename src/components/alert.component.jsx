@@ -16,7 +16,7 @@ export class Alert extends React.Component {
         return (
             <div name="alert">
                 <div className="header">
-                    <HighPriority size="50" color="red" duration="4s" />
+                    <HighPriority size="50" color={this.props.color} duration="4s" />
                     <div className="title">
                         <div className="type">{this.props.alert.type}</div>
                         <div className="source">{this.props.alert.source}</div>

@@ -35,7 +35,7 @@ export class InteractiveAreaChart extends React.Component {
         super(props);
 
         this.state = {
-            // svg
+            // chart
             area: undefined,
             container: undefined,
             dataset: undefined,
@@ -52,8 +52,11 @@ export class InteractiveAreaChart extends React.Component {
             xAxis: undefined,
             y: undefined,
             yAxis: undefined,
-            // focus
-            selectedAlerts: [],
+            // tabs
+            filters: {
+                xIndex: 0,
+                yKey: undefined
+            },
             selectedTab: 0,
             selectedDate: undefined,
             selectedAlert: -1,
@@ -63,7 +66,7 @@ export class InteractiveAreaChart extends React.Component {
     componentDidMount() {
         this.initializeChart();
         this.rerenderChart(true, alerts);
-        // let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
+        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
     }
   
     componentWillUnmount() { }
@@ -73,6 +76,28 @@ export class InteractiveAreaChart extends React.Component {
             .filter( (key) => key.visible )
             .map( (key) => key.label )
             .reduce( (accumulator, key) => accumulator += d[key].length, 0 );
+    }
+
+    filterAlerts(dataset, filters) {
+        let filteredAlerts = [];
+
+        if (filters.yKey === undefined || filters.yKey === 'TOTAL') {
+            let yKeys = dataset.yKeys
+            .filter( (key) => key.visible )
+            .map( (key) => key.label );
+            
+            for (let key in dataset.data[filters.xIndex]) {
+                if (yKeys.includes(key)) {
+                    filteredAlerts = filteredAlerts.concat(dataset.data[filters.xIndex][key]);
+                }
+            }
+            
+            filteredAlerts = filteredAlerts.sort( (a, b) => new Date(a.timestamp) > new Date(b.timestamp) );
+        } else {
+            filteredAlerts = dataset.data[filters.xIndex][filters.yKey];
+        }
+
+        return filteredAlerts;
     }
 
     initializeChart() {
@@ -205,8 +230,7 @@ export class InteractiveAreaChart extends React.Component {
                 .append('path')
                 .attr('path', 'area')
                 .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === layer.key) ].color )
-                .attr('d', self.state.area)
-                .attr('opacity', .75);
+                .attr('d', self.state.area);
 
             // appends each layer line
             d3Select('[layer="' + layer.key + '"]')
@@ -305,6 +329,7 @@ export class InteractiveAreaChart extends React.Component {
                 let d1 = self.state.dataset.data[i];
                 let d = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? d1 : d0;
                 self.state.selectedDate = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? i : i-1;
+                self.state.filters.xIndex = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? i : i-1;
                 self.setState({});
 
                 self.state.focus.select('[circle="focus"]')
@@ -391,13 +416,13 @@ export class InteractiveAreaChart extends React.Component {
                     <div>
                         <div className="tabs">
                             <span className="xValue">{this.state.dataset.data[this.state.selectedDate][this.state.dataset.xKey].toDateString('md')}</span>
-                            <span tabIndex="0" className="selected tab" onClick={() => this.selectTab(0)}>
+                            <span tabIndex="0" tab="TOTAL" className="selected tab" onClick={() => this.selectTab('TOTAL')}>
                                 <span className="count">{this.computeY(this.state.dataset.data[this.state.selectedDate], yKeys)}</span>
                                 <span className="label">TOTAL</span>
                             </span>
                             {
                             yKeys.filter( (key) => key.visible ).map( (key, i) => (
-                                <span key={i+1} tabIndex={i+1} className="tab" onClick={() => this.selectTab(i+1)}>
+                                <span key={i} tabIndex={i+1} tab={key.label} className="tab" onClick={() => this.selectTab(key.label)}>
                                     <span className="count">{this.state.dataset.data[this.state.selectedDate][key.label].length}</span>
                                     <span className="label" style={{backgroundColor: key.color}}>{key.label}</span>
                                 </span>
@@ -413,9 +438,9 @@ export class InteractiveAreaChart extends React.Component {
                                         <i className="fa fa-chevron-left"></i>
                                     </span>
                                 </button>
-                                <ul className="alerts">{this.state.selectedAlerts.map( (alert, i) => (
-                                    <li id={'alert' + i} key={i} className="alert" onClick={() => this.scrollTo(i)}>
-                                        <Alert alert={alert} key={i} />
+                                <ul className="alerts">{this.filterAlerts(this.state.dataset, this.state.filters).map( (alert, i) => (
+                                    <li alert={i} key={i} className="alert" onClick={() => this.scrollTo(i)}>
+                                        <Alert alert={alert} key={i} color={this.state.dataset.yKeys[this.state.dataset.yKeys.findIndex( (key) => key.label === alert.priority.label) || 0].color}/>
                                     </li>
                                 ))}</ul>
                                 <button className="bumper x" onClick={() => this.scrollTo(this.state.selectedAlert + 1)} disabled={(this.state.selectedAlert >= (alerts.length-1)) ? true : false}>
@@ -435,7 +460,7 @@ export class InteractiveAreaChart extends React.Component {
     }
 
     scrollTo(index) {        
-        let requestedAlert = document.getElementById('alert' + index);
+        let requestedAlert = document.querySelector('[alert="' + index + '"]');
         
         if (requestedAlert) {
             // updates class values:
@@ -467,18 +492,12 @@ export class InteractiveAreaChart extends React.Component {
         }
     }
 
-    selectTab(index) {
+    selectTab(yKey) {
         $('.tab')
             .removeClass('selected');
-        $('[tabIndex="' + index + '"]')
+        $('[tab="' + yKey + '"]')
             .addClass('selected');
-        let self = this;
-        if (index === 0) {
-            yKeys.filter( (key) => key.visible ).forEach( (key) => {
-                console.log(key)
-                self.state.selectedAlerts = self.state.selectedAlerts.concat(self.state.dataset.data[self.state.selectedDate][key.label])
-            })
-            self.state.selectedAlerts = self.state.selectedAlerts.sort( (a, b) => new Date(a.timestamp) > new Date(b.timestamp) );
-        }
+        this.state.filters.yKey = yKey;
+        this.setState({});
     }
 }
