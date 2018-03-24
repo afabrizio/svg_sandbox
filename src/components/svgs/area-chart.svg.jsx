@@ -10,6 +10,7 @@ import {
     max as d3Max,
     min as d3Min,
     mouse as d3Mouse,
+    scaleBand,
     scaleLinear,
     scaleOrdinal,
     scaleTime,
@@ -66,7 +67,7 @@ export class InteractiveAreaChart extends React.Component {
     componentDidMount() {
         this.initializeChart();
         this.rerenderChart(true, alerts);
-        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
+        // let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
     }
   
     componentWillUnmount() { }
@@ -198,63 +199,79 @@ export class InteractiveAreaChart extends React.Component {
             );
 
         // adds axis to SVG:
-        this.state.container.append('g')
+        let axis = this.state.container.append('g')
+            .attr('group', 'axis');
+        axis.append('g')
             .attr('group', 'xAxis')
             .attr('class', 'x axis')
             .attr('transform', 'translate(0, ' + this.state.height + ')')
             .call(this.state.xAxis); // generates elements that make up the axis
-        this.state.container.append('g')
+        axis.append('g')
             .attr('group', 'yAxis')            
             .attr('class', 'y axis')
             .attr('transform', 'translate(-1, 0)')            
             .call(this.state.yAxis);
 
-        // generate each stacked layer:
-        this.state.layer = this.state.container
-            .selectAll('.layer')
-            .data(this.state.stackedData.reverse()) // reversed layer order to prevent unwanted overlapping
-            .enter()
-                .append('g')
-                .attr('group', 'layer')
-                .attr('layer', (d) => d.key)
-                .attr('class', 'layer');
-        
+        // creates layer containers:
+        this.state.layers = this.state.container
+            .append('g')
+            .attr('group', 'layers')
+                .selectAll('g')
+                .data(this.state.stackedData.reverse())
+                .enter()
+                    .append('g')
+                    .attr('group', 'layer')
+                    .attr('layer', (d) => d.key );
+
+        // creates legend:
         if (complete) {
             this.renderChartLegend(this.state.dataset)
         }
 
-        // appends the point circles and layer line traces:
-        this.state.stackedData.forEach( (layer) => {
-            // appends each layer
-            d3Select('[layer="' + layer.key + '"]')
-                .append('path')
-                .attr('path', 'area')
-                .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === layer.key) ].color )
-                .attr('d', self.state.area);
+        // builds stacked-area chart:
+        // this.state.layers // area paths
+        //     .append('path')
+        //     .attr('path', (d) => d.key )
+        //     .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )                
+        //     .attr('d', self.state.area);
+        // this.state.layers // line paths
+        //     .append('path')
+        //     .attr('path', 'line')            
+        //     .attr('d', (d) => self.state.line(d))
+        //     .attr('stroke', 'black')
+        //     .attr('stroke-width', (d) => (self.state.stackedData.length - d.index > 1) ? '1px' : '2px')
+        //     .attr('opacity', (d) => (self.state.stackedData.length - d.index > 1) ? 0.5 : 1)              
+        //     .attr('fill', 'none');
+        // this.state.layers // datapoint indicator circles
+        //     .selectAll('circle')
+        //     .data( (d) => d )
+        //     .enter()
+        //         .append('circle')
+        //         .attr('circle', 'dataPoint')
+        //         .attr('r', 2)
+        //         .attr('cx', (d) => {console.log(d); return self.state.x(d.data[self.state.dataset.xKey])})
+        //         .attr('cy', (d) => self.state.y(d[1]))                
+        //         .attr('stroke', 'black')
+        //         .attr('stroke-width', '1px')
+        //         .attr('fill', 'white');
 
-            // appends each layer line
-            d3Select('[layer="' + layer.key + '"]')
-                .append('path')
-                .attr('path', 'line')            
-                .attr('d', self.state.line(layer))
+        // builds stacked-bar chart
+        this.state.layers
+            .append('g')
+            .attr('group', 'bars')
+            .attr('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )
+            .selectAll('rect')
+            .data( (d) => d )
+                .enter().append('rect')
+                .attr('x', (d) => self.state.x(d.data[self.state.dataset.xKey]) )
+                .attr('y', (d) => self.state.y(d[1]) )
+                .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
+                .attr('width', (d) => {
+                    console.log(self.state.x) //.bandwidth?
+                    return 20;
+                })
                 .attr('stroke', 'black')
-                .attr('stroke-width', (self.state.stackedData.length - layer.index > 1) ? '1px' : '2px')
-                .attr('opacity', (self.state.stackedData.length - layer.index > 1) ? 0.5 : 1)                
-                .attr('fill', 'none');
-
-            // appends circles for each data point:
-            layer.forEach( (datapoint) => {
-                d3Select('[layer="' + layer.key + '"]')
-                    .append('circle')
-                    .attr('circle', 'dataPoint')                        
-                    .attr('r', (self.state.stackedData.length - layer.index > 1) ? 2 : 2)
-                    .attr('cx', self.state.x(datapoint.data[self.state.dataset.xKey]))
-                    .attr('cy', self.state.y(datapoint[1]))                
-                    .attr('stroke', 'black')
-                    .attr('stroke-width', '1px')
-                    .attr('fill', 'white');
-            });             
-        });
+                .attr('stroke-width', 1);
 
         // interactive focus elements:
         this.state.focus = this.state.container.append('g')

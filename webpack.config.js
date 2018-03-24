@@ -13,7 +13,7 @@ module.exports = {
     plugins: [
         new CleanWebpackPlugin(['dist']),
         new HtmlWebpackPlugin({
-            title: 'Cytellix Documentation'
+            title: 'SVG Sandbox'
         }),
     ],
     devtool: 'inline-source-map',
