@@ -4,6 +4,13 @@ div[name="interactiveArea"] {
     padding-top: 20px;
     width: calc(100% - 40px);
 
+    [rect=barBtn]:hover,
+    [rect=areaBtn]:hover {
+        cursor: pointer;
+        stroke: blue;
+        stroke-width: 1px;
+    }
+
     div.graph {
         text-align: center;
     }

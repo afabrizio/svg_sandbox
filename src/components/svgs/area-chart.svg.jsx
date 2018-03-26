@@ -30,6 +30,7 @@ import { prepareData } from '../data/alerts/prepare.js';
 import yKeys from '../data/alerts/yKeys.json';
 
 import { Alert } from '../alert.component.jsx';
+import { AreaChartIcon, BarChartIcon } from './icons.svg.jsx';
 
 export class InteractiveAreaChart extends React.Component {
     constructor(props) {
@@ -38,6 +39,7 @@ export class InteractiveAreaChart extends React.Component {
         this.state = {
             // chart
             area: undefined,
+            chartType: 'bar',
             container: undefined,
             dataset: undefined,
             focus: undefined,
@@ -67,7 +69,7 @@ export class InteractiveAreaChart extends React.Component {
     componentDidMount() {
         this.initializeChart();
         this.rerenderChart(true, alerts);
-        // let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
+        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
     }
   
     componentWillUnmount() { }
@@ -110,9 +112,9 @@ export class InteractiveAreaChart extends React.Component {
 
         // defines chart margins:
         this.state.margin = {
-            top: 40,
-            right: 40,
-            bottom: 40,
+            top: 50,
+            right: 50,
+            bottom: 50,
             left: 50
         }
 
@@ -135,11 +137,87 @@ export class InteractiveAreaChart extends React.Component {
         this.state.legend = this.state.svg
             .append('g')
             .attr('group', 'legend')
-            .attr('transform', 'translate(' + this.state.margin.left + ', 0)')
+            .attr('transform', 'translate(' + this.state.margin.left + ', 0)');
+            
+        // appends charType toggle buttons:
+        let toggle = this.state.svg
+            .append('g')
+            .attr('group', 'toggleIcons')
+            .attr('transform', 'translate(' + this.state.margin.left + ', 0)');
+        let bar = toggle.append('g')
+            .attr('group', 'barIcon')
+            .attr('width', 20)
+            .attr('height', 20);
+        bar.append('path')
+            .attr('d', 'M 1 2 L 1 19 L 20 19')
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 1);
+        bar.append('rect')
+            .attr('x', 4)
+            .attr('y', 12)
+            .attr('width', 2)
+            .attr('height', 4);
+        bar.append('rect')
+            .attr('x', 8)
+            .attr('y', 8)
+            .attr('width', 2)
+            .attr('height', 8);
+        bar.append('rect')
+            .attr('x', 12)
+            .attr('y', 10)
+            .attr('width', 2)
+            .attr('height', 6);
+        bar.append('rect')
+            .attr('x', 16)
+            .attr('y', 6)
+            .attr('width', 2)
+            .attr('height', 10);
+        let area = toggle.append('g')
+            .attr('group', 'areaIcon')
+            .attr('width', 20)
+            .attr('height', 20)
+            .attr('transform', 'translate(30, 0)');
+        area.append('path')
+            .attr('d', 'M 1 2 L 1 19 L 20 19')
+            .attr('fill', 'none')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 1);
+        area.append('path')
+            .attr('d', 'M 4 16 L 4 12 L 8 8 L 12 10 L 16 4 L 18 6 L 18 16 Z')
+            .attr('fill', 'black')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 1);
+        // toggle buttons
+        toggle.append('rect')
+            .attr('rect', 'barBtn')
+            .attr('width', 20)
+            .attr('height', 20)
+            .attr('fill', 'white')
+            .on('click', function() {
+                if (self.state.chartType !== 'bar') {
+                    self.state.chartType = 'bar';                    
+                    self.rerenderChart(false, alerts);
+                }
+            });;
+        toggle.append('rect')
+            .attr('rect', 'areaBtn')
+            .attr('width', 20)
+            .attr('height', 20)
+            .attr('fill', 'white')
+            .attr('transform', 'translate(30, 0)')
+            .on('click', function() {
+                if (self.state.chartType !== 'area') {
+                    self.state.chartType = 'area';
+                    self.rerenderChart(false, alerts);
+                }
+            });
     }
 
     rerenderChart(complete, alerts) {
         let self = this;
+
+        // prepares data if complete rerender:
         if (complete) {
             this.state.dataset = prepareData(alerts, 'date', yKeys);
         }
@@ -154,11 +232,25 @@ export class InteractiveAreaChart extends React.Component {
             .value( (d, key) => d[key].length )
             .order(stackOrderNone)
             .offset(stackOffsetNone)
-        )(this.state.dataset.data)
+        )(this.state.dataset.data);
+
 
         // defines axis translator functions (value => pixel location):
-        let minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
-        let maxDate = d3Max(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
+        let barWidth;
+        let maxDate;
+        let minDate;
+        switch (this.state.chartType) {
+            case 'area':
+                maxDate = d3Max(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
+                minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
+                break;
+            case 'bar':
+                barWidth = 20;            
+                maxDate = d3Max(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
+                minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] ) - (1000*60*60*4);
+                break;
+            default:
+        }
         this.state.x = scaleTime()
             .domain([minDate, maxDate])
             .range([0, this.state.width]);
@@ -225,53 +317,59 @@ export class InteractiveAreaChart extends React.Component {
 
         // creates legend:
         if (complete) {
-            this.renderChartLegend(this.state.dataset)
+            this.renderChartLegend(this.state.dataset);
         }
-
+        
         // builds stacked-area chart:
-        // this.state.layers // area paths
-        //     .append('path')
-        //     .attr('path', (d) => d.key )
-        //     .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )                
-        //     .attr('d', self.state.area);
-        // this.state.layers // line paths
-        //     .append('path')
-        //     .attr('path', 'line')            
-        //     .attr('d', (d) => self.state.line(d))
-        //     .attr('stroke', 'black')
-        //     .attr('stroke-width', (d) => (self.state.stackedData.length - d.index > 1) ? '1px' : '2px')
-        //     .attr('opacity', (d) => (self.state.stackedData.length - d.index > 1) ? 0.5 : 1)              
-        //     .attr('fill', 'none');
-        // this.state.layers // datapoint indicator circles
-        //     .selectAll('circle')
-        //     .data( (d) => d )
-        //     .enter()
-        //         .append('circle')
-        //         .attr('circle', 'dataPoint')
-        //         .attr('r', 2)
-        //         .attr('cx', (d) => {console.log(d); return self.state.x(d.data[self.state.dataset.xKey])})
-        //         .attr('cy', (d) => self.state.y(d[1]))                
-        //         .attr('stroke', 'black')
-        //         .attr('stroke-width', '1px')
-        //         .attr('fill', 'white');
-
-        // builds stacked-bar chart
-        this.state.layers
-            .append('g')
-            .attr('group', 'bars')
-            .attr('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )
-            .selectAll('rect')
-            .data( (d) => d )
-                .enter().append('rect')
-                .attr('x', (d) => self.state.x(d.data[self.state.dataset.xKey]) )
-                .attr('y', (d) => self.state.y(d[1]) )
-                .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
-                .attr('width', (d) => {
-                    console.log(self.state.x) //.bandwidth?
-                    return 20;
-                })
-                .attr('stroke', 'black')
-                .attr('stroke-width', 1);
+        switch (this.state.chartType) {
+            case 'area':
+                d3Select('[rect="areaBtn"]').attr('opacity', 0);                
+                d3Select('[rect="barBtn"]').attr('opacity', 0.75);
+                this.state.layers // area paths
+                    .append('path')
+                    .attr('path', (d) => d.key )
+                    .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )                
+                    .attr('d', self.state.area);
+                this.state.layers // line paths
+                    .append('path')
+                    .attr('path', 'line')            
+                    .attr('d', (d) => self.state.line(d))
+                    .attr('stroke', 'black')
+                    .attr('stroke-width', (d) => (self.state.stackedData.length - d.index > 1) ? '1px' : '2px')
+                    .attr('opacity', (d) => (self.state.stackedData.length - d.index > 1) ? 0.5 : 1)              
+                    .attr('fill', 'none');
+                this.state.layers // datapoint indicator circles
+                    .selectAll('circle')
+                    .data( (d) => d )
+                    .enter()
+                        .append('circle')
+                        .attr('circle', 'dataPoint')
+                        .attr('r', 2)
+                        .attr('cx', (d) => self.state.x(d.data[self.state.dataset.xKey]))
+                        .attr('cy', (d) => self.state.y(d[1]))                
+                        .attr('stroke', 'black')
+                        .attr('stroke-width', '1px')
+                        .attr('fill', 'white');
+                break;
+            case 'bar':
+                d3Select('[rect="barBtn"]').attr('opacity', 0);
+                d3Select('[rect="areaBtn"]').attr('opacity', 0.75);                
+                this.state.layers
+                    .append('g')
+                    .attr('group', 'bars')
+                    .attr('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )
+                    .selectAll('rect')
+                    .data( (d) => d )
+                        .enter().append('rect')
+                        .attr('x', (d) => self.state.x(d.data[self.state.dataset.xKey]) - 10 )
+                        .attr('y', (d) => self.state.y(d[1]) )
+                        .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
+                        .attr('width', barWidth)
+                        .attr('stroke', 'black')
+                        .attr('stroke-width', 0);
+                break;
+            default:
+        }
 
         // interactive focus elements:
         this.state.focus = this.state.container.append('g')
@@ -373,7 +471,7 @@ export class InteractiveAreaChart extends React.Component {
         // removes old legend elements:
         this.state.legend.selectAll('*').remove();
 
-        // appends new legend elements:
+        // appends legend elements:
         this.state.stackedData.forEach( (layer => {
             let position = {
                 start: layer.index * (self.state.width / self.state.stackedData.length),
@@ -423,10 +521,14 @@ export class InteractiveAreaChart extends React.Component {
     }
 
     render() {
+
         return (
-            <div name="interactiveArea">
+            <div name="interactiveArea">               
                 <div className="graph">
-                    <svg svg="stackedArea" width={this.props.width}></svg>
+                    <svg svg="stackedArea" width={this.props.width}>
+                        {/* <BarChartIcon size="20"/>
+                        <AreaChartIcon size="20"/> */}
+                    </svg>
                 </div>
                 <div className="detail" style={{width: this.props.width}}>
                     {this.state.selectedDate !== undefined ?

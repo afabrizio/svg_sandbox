@@ -125,46 +125,51 @@ export class HorizontalWidget extends React.Component {
 export class VerticalWidget extends React.Component {
     constructor(props) {
         super(props);
+
+        this.state = { };
     }
 
     componentDidMount() {
+        this.state.dataset = this.prepareAlerts(alerts);
+        this.setState({});
+        console.log(this.state)
     }
   
     componentWillUnmount() {
     }
 
+    prepareAlerts(alerts) {
+        return alerts
+            .map( (alert) => {
+                alert.date = new Date(alert.timestamp);
+                switch (alert.priority.severity) {
+                    case 1:
+                        alert.priority.color = 'rgb(255, 51, 51)';
+                        break;
+                    case 2:
+                        alert.priority.color = 'rgb(255, 255, 153)';
+                        break;
+                    default:
+                        alert.priority.color = 'rgb(153, 204, 255)';
+                }
+                return alert;
+            })
+            .sort( (a, b) => a.date > b.date );
+    }
+
     render() {
         return (
+        this.state.dataset ?
             <div name="vertical-widget">
-                <ul>{alerts.map( (alert, i) => (
-                    <li key={i}>
-                        <span className="priority" style={{color: this.translatePriority(alert.priority).color}}>{this.translatePriority(alert.priority).label}</span>
-                        <span className="time">{(new Date(alert.timestamp)).toLocaleTimeString()}</span>
-                        <span className="date">{(new Date(alert.timestamp)).toDateString()}</span>
+                <ul>{this.state.dataset.map( (alert, i) => (
+                    <li alert={i} key={i}>
+                        <span className="priority" style={{color: alert.priority.color}}>{alert.priority.label}</span>
+                        <span className="time">{alert.date.toLocaleTimeString()}</span>
+                        <span className="date">{alert.date.toDateString()}</span>
                         <div className="alert">{alert.type}</div>
                     </li>
                 ))}</ul>
             </div>
-        );
-    }
-
-    translatePriority(priority) {
-        switch (priority) {
-            case 1:
-                return {
-                    label: 'high',
-                    color: 'rgb(255, 51, 51)'
-                };
-            case 2:
-                return {
-                    label: 'warn',
-                    color: 'rgb(255, 255, 153)'
-                };
-            case 3:
-                return {
-                    label: 'info',
-                    color: 'rgb(153, 204, 255)'
-                };
-        }
+        : null)
     }
 }
