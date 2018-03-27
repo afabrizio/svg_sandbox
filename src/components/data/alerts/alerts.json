@@ -111,17 +111,22 @@
     },
     {
         "priority": {
-            "label": "ALERT",
-            "severity": 1
+            "label": "WARN",
+            "severity": 2
         },
-        "source": "Security Operations Center",
-        "timestamp": "2018-03-17T01:20:51.696Z",
-        "type": "Nonresponsive VPN Tunnel(s)",
+        "source": "CCM",
+        "timestamp": "2018-02-01T06:32:29.696Z",
+        "type": "Device Discovered",
         "metadata": {
-            "Alert Type": "Nonresponsive VPN Tunnels",
-            "Description": "The CCM Virtual Machine ping script received no response through the VPN Tunnel(s).",
-            "Affected Tunnels": "10.0.0.3",
-            "Approximate Time": "Tue Mar 20 2018 17:45:53 GMT+0000 (UTC)"
+            "Zone Name": "Zone1",
+            "Name": "Device Discovered",
+            "MAC Address": null,
+            "Priority": "WARN",
+            "IP Address": null,
+            "Time": "03/20/2018 07:24:10 AM",
+            "Notification Type": "DEVICE_DISCOVERED",
+            "Message": "Device 192.25.25.32/32 created.",
+            "Id": 205555
         }
     }
 ]

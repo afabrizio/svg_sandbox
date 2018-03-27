@@ -2,7 +2,7 @@ module.exports.prepareData = function (alerts, xKey, yKeys) {
     try {
         let prepared = {
             xKey: xKey,
-            yKeys: yKeys.sort( (a, b) => a.zIndex > b.zIndex ),
+            yKeys: yKeys.sort( (a, b) => a.zIndex - b.zIndex ),
             data: undefined
         }
 
@@ -42,13 +42,13 @@ module.exports.prepareData = function (alerts, xKey, yKeys) {
         // for each date, sorts each priority array:
         for (let date in data) {
             for (let yKey in data[date]) {
-                data[date][yKey] = data[date][yKey].sort( (a,b) => new Date(a.timestamp) > new Date(b.timestamp) )
+                data[date][yKey] = data[date][yKey].sort( (a,b) => new Date(a.timestamp) - new Date(b.timestamp) )
             }
         }
 
         // identifies gap dates in the range and assigns empty arrays:
         let sorted = Object.keys(data)
-            .sort( (a, b) => new Date(a) > new Date(b) );
+            .sort( (a, b) => new Date(a) - new Date(b) );
         let minDate = sorted[0];
         let maxDate = sorted[sorted.length - 1];
         let msPerDay = 1000*60*60*24;
@@ -67,11 +67,9 @@ module.exports.prepareData = function (alerts, xKey, yKeys) {
         
         // sorts alert dates and assembles final data structure:
         prepared.data = Object.keys(data)
-            .sort( (a, b) => new Date(a) > new Date(b) )
+            .sort( (a, b) => new Date(a) - new Date(b) )
             .map( (date) => Object.assign({ [xKey]: new Date(date) }, data[date]) );
-
-            
-        console.log(prepared)
+        console.log(prepared.data)
         return prepared;
     } catch(e) {
         console.log(e)

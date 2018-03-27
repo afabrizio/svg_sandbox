@@ -69,7 +69,8 @@ export class InteractiveAreaChart extends React.Component {
     componentDidMount() {
         this.initializeChart();
         this.rerenderChart(true, alerts);
-        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'))
+        let e = document.querySelector('[rect="mouseCapture"]').dispatchEvent(new Event('mousemove'));
+        // prepareData(alerts, 'date', yKeys)
     }
   
     componentWillUnmount() { }
@@ -95,7 +96,7 @@ export class InteractiveAreaChart extends React.Component {
                 }
             }
             
-            filteredAlerts = filteredAlerts.sort( (a, b) => new Date(a.timestamp) > new Date(b.timestamp) );
+            filteredAlerts = filteredAlerts.sort( (a, b) => new Date(a.timestamp) - new Date(b.timestamp) );
         } else {
             filteredAlerts = dataset.data[filters.xIndex][filters.yKey];
         }
@@ -245,9 +246,9 @@ export class InteractiveAreaChart extends React.Component {
                 minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
                 break;
             case 'bar':
-                barWidth = 20;            
+                barWidth = (this.state.width / this.state.dataset.data.length) - 2;
                 maxDate = d3Max(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
-                minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] ) - (1000*60*60*4);
+                minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] ) - (1000*60*60*24);
                 break;
             default:
         }
@@ -297,7 +298,12 @@ export class InteractiveAreaChart extends React.Component {
             .attr('group', 'xAxis')
             .attr('class', 'x axis')
             .attr('transform', 'translate(0, ' + this.state.height + ')')
-            .call(this.state.xAxis); // generates elements that make up the axis
+            .call(this.state.xAxis) // generates elements that make up the axis
+            .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-65)');
         axis.append('g')
             .attr('group', 'yAxis')            
             .attr('class', 'y axis')
@@ -361,7 +367,7 @@ export class InteractiveAreaChart extends React.Component {
                     .selectAll('rect')
                     .data( (d) => d )
                         .enter().append('rect')
-                        .attr('x', (d) => self.state.x(d.data[self.state.dataset.xKey]) - 10 )
+                        .attr('x', (d) => self.state.x(d.data[self.state.dataset.xKey]) - (barWidth/2) )
                         .attr('y', (d) => self.state.y(d[1]) )
                         .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
                         .attr('width', barWidth)
