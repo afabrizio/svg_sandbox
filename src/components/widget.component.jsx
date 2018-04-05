@@ -1,7 +1,6 @@
 import React from 'react';
 import './stylesheets/widget.scss';
 import alerts from '../components/data/alerts/alerts.json';
-import yKeys from '../components/data/alerts/yKeys.json';
 
 export class HorizontalWidget extends React.Component {
     constructor(props) {
@@ -67,7 +66,7 @@ export class HorizontalWidget extends React.Component {
                 }
                 return alert;
             })
-            .sort( (a, b) => a.date > b.date );
+            .sort( (a, b) => a.date - b.date );
     }
 
     scrollTo(index) {   
@@ -154,7 +153,7 @@ export class VerticalWidget extends React.Component {
                 }
                 return alert;
             })
-            .sort( (a, b) => a.date > b.date );
+            .sort( (a, b) => a.date - b.date );
     }
 
     render() {

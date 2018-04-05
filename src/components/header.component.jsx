@@ -19,6 +19,10 @@ export class Header extends React.Component {
                     name: "H-Widget",
                     href: "#"
                 },
+                {
+                    name: "StackedBar",
+                    href: "#"
+                },
             ]
         }
     }

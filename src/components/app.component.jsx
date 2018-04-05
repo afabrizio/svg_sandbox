@@ -7,7 +7,7 @@ export class App extends React.Component {
         super(props);
 
         this.state = {
-            navIndex: 0,
+            navIndex: 3,
             navChange: (index) => {
                 this.setState({navIndex: index})
             }

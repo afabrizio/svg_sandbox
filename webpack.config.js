@@ -22,6 +22,11 @@ module.exports = {
     },
     module: {
         rules: [
+            // loads text files
+            {
+                test: /\.(txt|csv)$/,
+                use: 'raw-loader'
+            },
             // loads JSON data
             {
                 test: /\.json$/,

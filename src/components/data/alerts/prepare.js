@@ -51,14 +51,15 @@ module.exports.prepareData = function (alerts, xKey, yKeys) {
             .sort( (a, b) => new Date(a) - new Date(b) );
         let minDate = sorted[0];
         let maxDate = sorted[sorted.length - 1];
+        let today = (new Date()).toLocaleDateString();
         let msPerDay = 1000*60*60*24;
-        let numDays = Math.max(1, (new Date(maxDate) - new Date(minDate)) / msPerDay );
+        let numDays = Math.max(1, Math.ceil((new Date(today) - new Date(minDate)) / msPerDay ));
         let zeroState = {};
         priorities.forEach( (yKey) => {
             zeroState[yKey] = [];
         });       
         
-        for (let i = 0; i < numDays; i++) {
+        for (let i = 0; i <= numDays; i++) {
             let localeDateString = (new Date( (new Date(minDate)).getTime() + (i * msPerDay))).toLocaleDateString();
             if (sorted.indexOf(localeDateString) < 0) {
                 data[localeDateString] = zeroState;

@@ -115,7 +115,7 @@
             "severity": 2
         },
         "source": "CCM",
-        "timestamp": "2018-02-01T06:32:29.696Z",
+        "timestamp": "2018-02-26T06:32:29.696Z",
         "type": "Device Discovered",
         "metadata": {
             "Zone Name": "Zone1",

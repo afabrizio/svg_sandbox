@@ -1,6 +1,7 @@
 import React from 'react';
 import { InteractiveAreaChart } from './svgs/area-chart.svg.jsx';
 import { HorizontalWidget, VerticalWidget } from './widget.component.jsx';
+import { StackedBar } from './svgs/stacked-bar.svg.jsx';
 
 export class Content extends React.Component {
     constructor(props) {
@@ -29,6 +30,8 @@ export class Content extends React.Component {
                 return <VerticalWidget />
             case 2:
                 return <HorizontalWidget />
+            case 3:
+                return <StackedBar width="800" height="250" />
         }
     }
 }

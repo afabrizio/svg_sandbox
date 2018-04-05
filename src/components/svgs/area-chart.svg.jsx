@@ -248,7 +248,7 @@ export class InteractiveAreaChart extends React.Component {
             case 'bar':
                 barWidth = (this.state.width / this.state.dataset.data.length) - 2;
                 maxDate = d3Max(this.state.dataset.data, (d) => d[self.state.dataset.xKey] );
-                minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] ) - (1000*60*60*24);
+                minDate = d3Min(this.state.dataset.data, (d) => d[self.state.dataset.xKey] ) - (1000*60*60*12);
                 break;
             default:
         }
@@ -531,10 +531,7 @@ export class InteractiveAreaChart extends React.Component {
         return (
             <div name="interactiveArea">               
                 <div className="graph">
-                    <svg svg="stackedArea" width={this.props.width}>
-                        {/* <BarChartIcon size="20"/>
-                        <AreaChartIcon size="20"/> */}
-                    </svg>
+                    <svg svg="stackedArea" width={this.props.width}></svg>
                 </div>
                 <div className="detail" style={{width: this.props.width}}>
                     {this.state.selectedDate !== undefined ?
