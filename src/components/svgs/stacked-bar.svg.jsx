@@ -94,7 +94,8 @@ export class StackedBar extends React.Component {
                 }
             })
             .entries(self.state.dataset);
-
+        
+        // assembles a stacked dataset from the nested dataset:
         this.state.stackedData = (d3.stack()
             .keys(self.state.nestedDataset.map( (riskLevel) => riskLevel.key ))
             .value( (d) => d.value.count)
