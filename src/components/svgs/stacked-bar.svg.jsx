@@ -259,7 +259,6 @@ export class StackedBar extends React.Component {
                 .attr('fill', 'black')
                 .attr('text-anchor', 'middle')
                 .text( (d) => d.total );
-        
         labels
             .attr('x', (d) => self.state.x(d.xLabel) + self.state.x.bandwidth()/2)
             .attr('y', (d) => self.state.y(d.total) - 4)
