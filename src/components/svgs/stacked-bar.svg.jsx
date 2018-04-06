@@ -2,8 +2,12 @@ import React from 'react';
 import $ from 'jquery';
 import * as d3 from 'd3';
 
-import yKeys from '../data/alerts/yKeys.json';
-import csvString from '../data/nessus.csv';
+import scan_1 from '../data/nessus-1.csv';
+import scan_2 from '../data/nessus-2.csv';
+import scan_3 from '../data/nessus-3.csv';
+
+import '../stylesheets/stacked-bar.scss';
+
 
 
 export class StackedBar extends React.Component {
@@ -17,16 +21,67 @@ export class StackedBar extends React.Component {
             height: undefined,
             legend: undefined,
             margin: undefined,
+            stackedDataset: undefined,
             svg: undefined,
             width: undefined,
+            x: undefined,
+            xAxis: undefined,
+            y: undefined,
+            yAxis: undefined,
+            yKeys: [
+                {
+                    "label": "None",
+                    "color": "#357ABD",
+                    "zIndex": 0,
+                    "visible": true
+                },
+                {
+                    "label": "Low",
+                    "color": "#4CAE4C",
+                    "zIndex": 1,
+                    "visible": true
+                },
+                {
+                    "label": "Medium",
+                    "color": "#FDC431",
+                    "zIndex": 2,
+                    "visible": true        
+                },
+                {
+                    "label": "High",
+                    "color": "#EE9336",
+                    "zIndex": 3,
+                    "visible": true        
+                },
+                {
+                    "label": "Critical",
+                    "color": "#D43F3A",
+                    "zIndex": 4,
+                    "visible": true        
+                }
+            ],
         };
     }
 
     componentDidMount() {
-        this.state.dataset = d3.csvParse(csvString);
         this.initializeChart();
-        this.rerenderChart();
-        console.log(this.state)
+        this.rerenderChart(
+            true,
+            [
+                {
+                    x: 'scan_1',
+                    y: d3.csvParse(scan_1)
+                },
+                {
+                    x: 'scan_2',
+                    y: d3.csvParse(scan_2)
+                },
+                {
+                    x: 'scan_3',
+                    y: d3.csvParse(scan_3)
+                }
+            ]
+        );
     }
   
     componentWillUnmount() { }
@@ -38,334 +93,245 @@ export class StackedBar extends React.Component {
             this.state.svg.selectAll('*').remove();
         }
 
-        // defines chart margins:
+        /* ===< SIZING >=== */
         this.state.margin = {
-            top: 50,
+            top: 100,
             right: 50,
             bottom: 50,
             left: 50
         }
-
         // defines width and height of chart relative to margins:
         this.state.width = this.props.width - (this.state.margin.left + this.state.margin.right);
         this.state.height = this.props.height - (this.state.margin.top + this.state.margin.bottom);
-        
         // sizes the SVG element:
         this.state.svg = d3.select('svg[svg="stackedBar"]')
             .attr('width', this.props.width)
             .attr('height', this.props.height);
     
-        // generates the axis group:
+        /* ===< AXIS >=== */
         this.state.axis = this.state.svg
             .append('g')
             .attr('group', 'axis')
             .attr('transform', 'translate(' + this.state.margin.left + ',' + this.state.margin.top + ')');
 
-        // generates the dataset group:
+        /* ===< DATA >=== */
+        // generates the data group:
         this.state.data = this.state.svg
             .append('g')
             .attr('group', 'data')
             .attr('transform', 'translate(' + this.state.margin.left + ',' + this.state.margin.top + ')');
+        // generates the [data -> layers] group
+        this.state.layers = this.state.data
+            .append('g')
+            .attr('group', 'layers');
 
-        // generates the legend group:
+        /* ===< LEGEND >=== */
         this.state.legend = this.state.svg
             .append('g')
             .attr('group', 'legend')
             .attr('transform', 'translate(' + this.state.margin.left + ', 0)');
     }
 
-    rerenderChart(complete, alerts) {
+    rerenderChart(complete, dataset) {
         let self = this;
-
-        if (!this.state.dataset) return;
         
-        // remove old elements:
-        // this.state.data.selectAll('*').remove();
-
+        /* ===< DATASET MANIPULATION >+++ */
+        if (!dataset) {
+            return;
+        } else {
+            this.state.dataset = dataset;
+        }
         // assembles a nested dataset:
-        this.state.nestedDataset = d3.nest()
-            .key( (d) => d['Risk'] )
-            .rollup( (v) => {
-                return {
-                    count: v.length,
-                    hosts: d3.nest()
-                        .key( (d) => d['Host'] )
-                        .entries(v)
-                }
-            })
-            .entries(self.state.dataset);
-        
+        let nestedDataset = this.state.dataset.map( (collection) => {
+            return {
+                x: collection.x,
+                y: d3.nest()
+                    .key( (d) => d['Risk'] )
+                    .rollup( (v) => {
+                        return {
+                            count: v.length,
+                            hosts: d3.nest()
+                                .key( (d) => d['Host'] )
+                                .entries(v),
+                        };
+                    })
+                    .object(collection.y)
+            }
+        } );
         // assembles a stacked dataset from the nested dataset:
-        this.state.stackedData = (d3.stack()
-            .keys(self.state.nestedDataset.map( (riskLevel) => riskLevel.key ))
-            .value( (d) => d.value.count)
+        this.state.stackedDataset = (d3.stack()
+            .keys(self.state.yKeys.filter( (key) => key.visible ).map( (key) => key.label ))
+            .value( (d, key) => (d.y[key] ? d.y[key].count : 0) )
             .order(d3.stackOrderNone)
             .offset(d3.stackOffsetNone)
-        )(self.state.nestedDataset);
+        )(nestedDataset);
 
+        /* ===< AXIS >=== */        
+        // defines axis translator functions (value => pixel location):
+        this.state.x = d3.scaleBand()
+            .domain(self.state.dataset.map( (collection) => collection.x ))
+            .range([0, this.state.width])
+            .padding(.5);
+        this.state.y = d3.scaleLinear()
+            .domain([
+                0,
+                d3.max(this.state.stackedDataset, (d) => d[0][1])
+            ])
+            .range([this.state.height, 0]);
+        // defines axis generator functions:
+        this.state.xAxis = d3.axisBottom(this.state.x);
+        this.state.yAxis = d3.axisLeft(this.state.y)
+            .ticks(
+                Math.max(4, Math.floor(this.state.height / 50))
+            );
+        // removes old axis
+        this.state.axis.selectAll('*').remove();
+        this.state.axis
+            .append('g')
+            .attr('group', 'xAxis')
+            .attr('transform', 'translate(0, ' + this.state.height + ')')
+            .call(this.state.xAxis) // generates elements that make up the axis
+            .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-65)');
+        this.state.axis
+            .append('g')
+            .attr('group', 'yAxis')            
+            .call(this.state.yAxis);
 
-        // // defines axis translator functions (value => pixel location):
-        // this.state.x = d3.scaleOrdinal()
-        //     .domain([minDate, maxDate])
-        //     .range([0, this.state.width]);
-        // this.state.y = scaleLinear()
-        //     .domain([
-        //         0,
-        //         d3Max(
-        //             this.state.dataset.data,
-        //             (d) => self.computeY(d, this.state.dataset.yKeys)
-        //         )
-        //     ])
-        //     .range([this.state.height, 0]);
-
-        // // defines axis generator functions:
-        // let numDays = Math.max(1, (maxDate - minDate) / (1000*60*60*24) );
-        // let maxTicks = this.state.width / 50;
-        // this.state.xAxis = axisBottom(this.state.x)
-        //     .tickFormat(d3TimeFormat('%b %d'))
-        //     .ticks(
-        //         d3TimeDay.every( 
-        //             (numDays <= maxTicks) ? 1 : Math.ceil(numDays / maxTicks)
-        //         )
-        //     );
-        // this.state.yAxis = axisLeft(this.state.y)
-        //     .ticks(
-        //         Math.max(4, Math.floor(this.state.height / 50))
-        //     );
-
-        // // adds axis to SVG:
-        // let axis = this.state.container.append('g')
-        //     .attr('group', 'axis');
-        // axis.append('g')
-        //     .attr('group', 'xAxis')
-        //     .attr('class', 'x axis')
-        //     .attr('transform', 'translate(0, ' + this.state.height + ')')
-        //     .call(this.state.xAxis) // generates elements that make up the axis
-        //     .selectAll('text')
-        //         .style('text-anchor', 'end')
-        //         .attr('dx', '-.8em')
-        //         .attr('dy', '.15em')
-        //         .attr('transform', 'rotate(-65)');
-        // axis.append('g')
-        //     .attr('group', 'yAxis')            
-        //     .attr('class', 'y axis')
-        //     .attr('transform', 'translate(-1, 0)')            
-        //     .call(this.state.yAxis);
-
-        // // creates layer containers:
-        // this.state.layers = this.state.container
-        //     .append('g')
-        //     .attr('group', 'layers')
-        //         .selectAll('g')
-        //         .data(this.state.stackedData.reverse())
-        //         .enter()
-        //             .append('g')
-        //             .attr('group', 'layer')
-        //             .attr('layer', (d) => d.key );
-
-        // // creates legend:
-        // if (complete) {
-        //     this.renderChartLegend(this.state.dataset);
-        // }
+        /* ===< LEGEND >=== */
+        if (complete) this.renderChartLegend();
         
-        // // builds stacked-area chart:
-        // switch (this.state.chartType) {
-        //     case 'area':
-        //         d3Select('[rect="areaBtn"]').attr('opacity', 0);                
-        //         d3Select('[rect="barBtn"]').attr('opacity', 0.75);
-        //         this.state.layers // area paths
-        //             .append('path')
-        //             .attr('path', (d) => d.key )
-        //             .style('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )                
-        //             .attr('d', self.state.area);
-        //         this.state.layers // line paths
-        //             .append('path')
-        //             .attr('path', 'line')            
-        //             .attr('d', (d) => self.state.line(d))
-        //             .attr('stroke', 'black')
-        //             .attr('stroke-width', (d) => (self.state.stackedData.length - d.index > 1) ? '1px' : '2px')
-        //             .attr('opacity', (d) => (self.state.stackedData.length - d.index > 1) ? 0.5 : 1)              
-        //             .attr('fill', 'none');
-        //         this.state.layers // datapoint indicator circles
-        //             .selectAll('circle')
-        //             .data( (d) => d )
-        //             .enter()
-        //                 .append('circle')
-        //                 .attr('circle', 'dataPoint')
-        //                 .attr('r', 2)
-        //                 .attr('cx', (d) => self.state.x(d.data[self.state.dataset.xKey]))
-        //                 .attr('cy', (d) => self.state.y(d[1]))                
-        //                 .attr('stroke', 'black')
-        //                 .attr('stroke-width', '1px')
-        //                 .attr('fill', 'white');
-        //         break;
-        //     case 'bar':
-        //         d3Select('[rect="barBtn"]').attr('opacity', 0);
-        //         d3Select('[rect="areaBtn"]').attr('opacity', 0.75);                
-        //         this.state.layers
-        //             .append('g')
-        //             .attr('group', 'bars')
-        //             .attr('fill', (d) => self.state.dataset.yKeys[self.state.dataset.yKeys.findIndex( (key) => key.label === d.key) ].color )
-        //             .selectAll('rect')
-        //             .data( (d) => d )
-        //                 .enter().append('rect')
-        //                 .attr('x', (d) => self.state.x(d.data[self.state.dataset.xKey]) - (barWidth/2) )
-        //                 .attr('y', (d) => self.state.y(d[1]) )
-        //                 .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
-        //                 .attr('width', barWidth)
-        //                 .attr('stroke', 'black')
-        //                 .attr('stroke-width', 0);
-        //         break;
-        //     default:
-        // }
-
-        // // interactive focus elements:
-        // this.state.focus = this.state.container.append('g')
-        //     .attr('group', 'focus')
-        //     .style('display', 'none');
-
-        // this.state.focus.append('circle') 
-        //     .attr('circle', 'focus')
-        //     .style('fill', 'none') 
-        //     .style('stroke', 'black')
-        //     .attr('r', 6);
-        // this.state.focus.append('line')
-        //     .attr('line', 'xFocus')
-        //     .style('stroke', 'white')
-        //     .style('opacity', 0.5)            
-        //     .attr('y1', 0)
-        //     .attr('y2', this.state.height);
-        // this.state.focus.append('line')
-        //     .attr('line', 'xFocus')
-        //     .style('stroke', 'black')
-        //     .style('stroke-dasharray', '3,3')
-        //     .style('opacity', 0.5)
-        //     .attr('y1', 0)
-        //     .attr('y2', this.state.height);
-        // this.state.focus.append('line')
-        //     .attr('line', 'yFocus')        
-        //     .style('stroke', 'white')
-        //     .style('opacity', 0.5)
-        //     .attr('x1', this.state.width)
-        //     .attr('x2', this.state.width);
-        // this.state.focus.append('line')
-        //     .attr('line', 'yFocus')        
-        //     .style('stroke', 'black')
-        //     .style('stroke-dasharray', '3,3')
-        //     .style('opacity', 0.5)
-        //     .attr('x1', this.state.width)
-        //     .attr('x2', this.state.width);
-        // this.state.focus.append('text')
-        //     .attr('text', 'yFocus')
-        //     .attr('font-size', '12px')
-        //     .attr('stroke', 'white')
-        //     .attr('stroke-width', 4)
-        //     .attr('opacity', 0.5)
-        //     .attr('dx', 8)
-        //     .attr('dy', '-.3em');
-        // this.state.focus.append('text')
-        //     .attr('text', 'yFocus')
-        //     .attr('font-size', '12px')
-        //     .attr('font-weight', 'bold')
-        //     .attr('dx', 8)
-        //     .attr('dy', '-.3em');
+        /* ===< STACKED BARS >=== */
+        let layers = self.state.layers
+            .selectAll('g')
+            .data(this.state.stackedDataset, (d) => d.key ) // layers are matched based on the key property
+        // adds bar groups that are new to the dataset:
+        layers.enter()
+            .append('g')
+            .attr('group', 'layer')
+            .attr('layer', (d) => d.key )
+            .attr('fill', (d) => {
+                let i = self.state.yKeys.findIndex( (key) => key.label === d.key);  
+                let color = self.state.yKeys[i].visible ? self.state.yKeys[i].color : 'white';      
+                return color;
+            })
+            .selectAll('rect')
+            .data( (d) => d )
+            .enter()
+            .append('rect')
+                .attr('x', (d) => self.state.x(d.data.x) )
+                .attr('y', (d) => self.state.y(d[1]) )
+                .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
+                .attr('width', self.state.x.bandwidth())
+                .attr('stroke', 'black')
+                .attr('stroke-width', 0);
+        // updates bar groups with the new values:
+        layers
+            .selectAll('rect')
+            .data( (d) => d )
+            .attr('x', (d) => self.state.x(d.data.x) )
+            .attr('y', (d) => self.state.y(d[1]) )
+            .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
+            .attr('width', self.state.x.bandwidth())
+        // removes any bar groups that are no longer visible in the dataset:
+        layers
+            .exit()
+            .remove();
         
-        // // captures mouse events and updates the focus elements:
-        // this.state.container
-        //     .append('rect')
-        //     .attr('rect', 'mouseCapture')
-        //     .attr('width', this.state.width)
-        //     .attr('height', this.state.height)
-        //     .style('fill', 'none')
-        //     .style('pointer-events', 'all')
-        //     .on('mouseover', function() {
-        //         self.state.focus.style('display', null);
-        //     })
-        //     // .on('mouseout', function() {
-        //     //     self.state.focus.style('display', 'none');
-        //     // }) 
-        //     .on('mousemove', function() {
-        //         let x0 = self.state.x.invert(d3Mouse(this)[0]);
-        //         let bisectDate = bisector( (d) => d[self.state.dataset.xKey] ).left;
-        //         let i = bisectDate(self.state.dataset.data, x0, 1);
-        //         let d0 = self.state.dataset.data[i-1];
-        //         let d1 = self.state.dataset.data[i];
-        //         let d = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? d1 : d0;
-        //         self.state.selectedDate = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? i : i-1;
-        //         self.state.filters.xIndex = (x0 - d0[self.state.dataset.xKey] > d1[self.state.dataset.xKey] - x0) ? i : i-1;
-        //         self.setState({});
+        /* ===< BAR TOTALS >=== */
+        let totals = self.state.stackedDataset[self.state.stackedDataset.length-1].map( (collection) => {
+            return {
+                xLabel: collection.data.x,
+                total: collection[1]
+            }
+        })
+        let labels = self.state.data
+            .selectAll('text')
+            .data(totals);
+        labels
+            .enter()
+            .append('text')
+                .attr('x', (d) => self.state.x(d.xLabel) + self.state.x.bandwidth()/2)
+                .attr('y', (d) => self.state.y(d.total) - 4)
+                .attr('fill', 'black')
+                .attr('text-anchor', 'middle')
+                .text( (d) => d.total );
+        
+        labels
+            .attr('x', (d) => self.state.x(d.xLabel) + self.state.x.bandwidth()/2)
+            .attr('y', (d) => self.state.y(d.total) - 4)
+            .attr('fill', 'black')
+            .attr('text-anchor', 'middle')
+            .text( (d) => d.total );
+        labels 
+            .exit()
+            .remove();
 
-        //         self.state.focus.select('[circle="focus"]')
-        //             .attr('transform', 'translate(' + self.state.x(d[self.state.dataset.xKey]) + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')');
-
-        //         self.state.focus.selectAll('[line="xFocus"]')
-        //             .attr('transform', 'translate(' + self.state.x(d[self.state.dataset.xKey]) + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')')
-        //             .attr('y2', self.state.height - self.state.y(self.computeY(d, self.state.dataset.yKeys)));
-              
-        //         self.state.focus.selectAll('[line="yFocus"]')
-        //             .attr('transform', 'translate(' + self.state.width * -1 + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')')
-        //             .attr('x2', self.state.width * 2);
-
-        //         self.state.focus.selectAll('[text="yFocus"]')
-        //             .attr("transform", 'translate(' + self.state.x(d[self.state.dataset.xKey]) + ',' + self.state.y(self.computeY(d, self.state.dataset.yKeys)) + ')')
-        //             .text(self.computeY(d, self.state.dataset.yKeys));
-        //     });
-        // console.log(this.state)
+        
+        /* ===< EVENT CAPTURE >=== */
+        console.log(this.state)
     }
 
-    renderChartLegend(dataset) {
+    renderChartLegend() {
         let self = this;
 
-        // removes old legend elements:
-        this.state.legend.selectAll('*').remove();
-
-        // appends legend elements:
-        this.state.stackedData.forEach( (layer => {
-            let position = {
-                start: layer.index * (self.state.width / self.state.stackedData.length),
-                offset: (self.state.width / self.state.stackedData.length) / 2,
-                spacing: 12
-            };
-            let key = this.state.legend
-                .append('g')
-                .attr('group', 'mapping')
-                .attr('key', layer.key)
-                .attr('visibile', true)
+        // appends a group element for each legend key:
+        let keys = this.state.legend
+            .selectAll('[group="key"]')
+            .data(self.state.stackedDataset)
+            .enter()
+            .append('g')
+                .attr('group', 'key')
+                .attr('key', (d) => d.key )
                 .style('cursor', 'pointer');
-            key.append('circle')
-                .attr('circle', layer.key)
-                .attr('r', 6)
-                .attr('cx', position.start + position.offset)
-                .attr('cy', self.state.margin.top / 2)                
-                .attr('stroke', 'black')
-                .attr('stroke-width', '1px')
-                .attr('opacity', .75)
-                .attr('fill', dataset.yKeys[layer.index].color);
-            key.append('text')
-                .attr('text', 'key')
-                .attr('font-size', 10)
-                .attr('dx', position.start + position.offset + position.spacing)
-                .attr('dy', (self.state.margin.top / 2) + 4)
-                .text(layer.key);
-            key.on('click', function() {
-                let key = d3Select(this);
-                let toggle = d3Select(this).select('[circle="' + layer.key + '"]');
-                let i = dataset.yKeys.findIndex( (key) => key.label === layer.key);
-                switch (key.attr('visibile')) {
-                    case 'true':
-                        key.attr('visibile', false);
-                        toggle.attr('fill', 'white');
-                        dataset.yKeys[i].visible = false;
-                        break;
-                    default:
-                        key.attr('visibile', true);
-                        toggle.attr('fill', dataset.yKeys[i].color);
-                        dataset.yKeys[i].visible = true;
-                }
-                self.rerenderChart(false, dataset);
-                self.setState({});
+        // appends the colored circle key identifier:
+        keys.append('circle')
+            .attr('circle', (d) => d.key )
+            .attr('r', 6)
+            .attr('cx', (d) => {
+                let position = {
+                    start: d.index * (self.state.width / self.state.stackedDataset.length),
+                    offset: (self.state.width / self.state.stackedDataset.length) / 2,
+                    spacing: 12
+                };
+                return position.start + position.offset;
+            })
+            .attr('cy', self.state.margin.top / 2)                
+            .attr('stroke', 'black')
+            .attr('stroke-width', '1px')
+            .attr('opacity', .75)
+            .attr('fill', (d) => {
+                let i = self.state.yKeys.findIndex( (key) => key.label === d.key);  
+                let color = self.state.yKeys[i].visible ? self.state.yKeys[i].color : 'white';      
+                return color;
             });
-        }));
+        // appends the text label for each key:
+        keys.append('text')
+            .attr('text', 'key')
+            .attr('font-size', 10)
+            .attr('dx', (d) => {
+                let position = {
+                    start: d.index * (self.state.width / self.state.stackedDataset.length),
+                    offset: (self.state.width / self.state.stackedDataset.length) / 2,
+                    spacing: 12
+                };
+                return position.start + position.offset + position.spacing;
+            })
+            .attr('dy', (self.state.margin.top / 2) + 4)
+            .text( (d) => d.key );
+        // adds event listeners to each key and binds a handler function:
+        keys.on('click', function(d) {
+            let i = self.state.yKeys.findIndex( (key) => key.label === d.key);
+            self.state.yKeys[i].visible = !self.state.yKeys[i].visible;
+            d3.select(this)
+                .select('circle')
+                .attr('fill', self.state.yKeys[i].visible ? self.state.yKeys[i].color : 'white')
+            self.setState({});            
+            self.rerenderChart(false, self.state.dataset);
+        });
     }
 
     render() {
