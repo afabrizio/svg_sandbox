@@ -33,13 +33,13 @@ export class StackedBar extends React.Component {
                     "label": "None",
                     "color": "#357ABD",
                     "zIndex": 0,
-                    "visible": true
+                    "visible": false
                 },
                 {
                     "label": "Low",
                     "color": "#4CAE4C",
                     "zIndex": 1,
-                    "visible": true
+                    "visible": false
                 },
                 {
                     "label": "Medium",
@@ -150,12 +150,20 @@ export class StackedBar extends React.Component {
                     .rollup( (v) => {
                         return {
                             count: v.length,
-                            hosts: d3.nest()
-                                .key( (d) => d['Host'] )
-                                .entries(v),
+                            description: d3.nest()
+                                .key( (d) => d['Description'] )
+                                .rollup( (v) => {
+                                    return {
+                                        count: v.length,
+                                        hosts: d3.nest()
+                                            .key( (d) => d['Host'] )
+                                            .entries(v)
+                                    };
+                                })
+                                .entries(v)
                         };
                     })
-                    .object(collection.y)
+                    .object(collection.y),
             }
         } );
         // assembles a stacked dataset from the nested dataset:
@@ -215,19 +223,61 @@ export class StackedBar extends React.Component {
             .attr('layer', (d) => d.key )
             .attr('fill', (d) => {
                 let i = self.state.yKeys.findIndex( (key) => key.label === d.key);  
-                let color = self.state.yKeys[i].visible ? self.state.yKeys[i].color : 'white';      
-                return color;
+                return self.state.yKeys[i].color;      
             })
             .selectAll('rect')
             .data( (d) => d )
             .enter()
             .append('rect')
+                .attr('rect', 'bar')
                 .attr('x', (d) => self.state.x(d.data.x) )
                 .attr('y', (d) => self.state.y(d[1]) )
                 .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
                 .attr('width', self.state.x.bandwidth())
                 .attr('stroke', 'black')
-                .attr('stroke-width', 0);
+                .attr('stroke-width', 0)
+                .on('mouseenter', function(d) {
+                    d3.select(this)
+                        .attr('stroke-width', 1);
+                })
+                .on('mouseleave', function(d) {
+                    d3.select(this)
+                        .attr('stroke-width', 0);
+                })
+                .on('click', function(d, i) {
+                    let yKey = this.parentNode.getAttribute('layer');
+                    let yKeyIndex = self.state.yKeys.findIndex( (key) => key.label === yKey);
+                    let color = self.state.yKeys[yKeyIndex].color;
+                    
+                    // defines a dynamically colored pattern
+                    d3.select('#diagonalStripePattern').remove();
+                    let pattern = self.state.svg
+                        .select('defs')
+                        .append('pattern')
+                            .attr('id', 'diagonalStripePattern')
+                            .attr('patternUnits', 'userSpaceOnUse')
+                            .attr('width', 10)
+                            .attr('height', 10);
+                    pattern.append('image')
+                        .attr('x', 0)
+                        .attr('y', 0)
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('xlink:href', 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMCcgaGVpZ2h0PScxMCc+CiAgPHJlY3Qgd2lkdGg9JzEwJyBoZWlnaHQ9JzEwJyBmaWxsPSd3aGl0ZScvPgogIDxwYXRoIGQ9J00tMSwxIGwyLC0yCiAgICAgICAgICAgTTAsMTAgbDEwLC0xMAogICAgICAgICAgIE05LDExIGwyLC0yJyBzdHJva2U9J2JsYWNrJyBzdHJva2Utd2lkdGg9JzEnLz4KPC9zdmc+Cg==');
+                    pattern.append('rect')
+                        .attr('x', 0)
+                        .attr('y', 0)
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('fill', color)
+                        .style('opacity', 0.9);
+                    // updates
+                    console.log('clicked!', d.data.y[yKey]);
+                    d3.selectAll('[rect="bar"]')
+                        .style('fill', null);
+                    d3.select(this)
+                        .style('fill', 'url(#diagonalStripePattern)');
+                });
         // updates bar groups with the new values:
         layers
             .selectAll('rect')
@@ -336,8 +386,17 @@ export class StackedBar extends React.Component {
     render() {
         return (
             <div name="stackedBar">               
-                <svg svg="stackedBar" width={this.props.width}></svg>
+                <svg svg="stackedBar" width={this.props.width} xmlns="http://www.w3.org/2000/svg" version="1.1">
+                    <defs></defs>
+                </svg>
             </div>
         );
     }
 }
+
+/* subchart is a combo of these!:
+  1. https://bl.ocks.org/mbhall88/b2504f8f3e384de4ff2b9dfa60f325e2
+  2. http://bl.ocks.org/mccannf/3994129 (variable radius)
+  3. https://bl.ocks.org/mbostock/5682158 (animation)
+  4. http://bl.ocks.org/NPashaP/9994181 (3D)
+*/

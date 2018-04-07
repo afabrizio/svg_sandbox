@@ -31,7 +31,7 @@ export class Content extends React.Component {
             case 2:
                 return <HorizontalWidget />
             case 3:
-                return <StackedBar width="800" height="250" />
+                return <StackedBar width="1000" height="400" />
         }
     }
 }

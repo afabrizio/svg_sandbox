@@ -1,4 +1,5 @@
 const path = require('path')
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
@@ -15,6 +16,7 @@ module.exports = {
         new HtmlWebpackPlugin({
             title: 'SVG Sandbox'
         }),
+        new BundleAnalyzerPlugin()
     ],
     devtool: 'inline-source-map',
     devServer: {
