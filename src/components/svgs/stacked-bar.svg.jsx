@@ -1,10 +1,5 @@
 import React from 'react';
-import $ from 'jquery';
 import * as d3 from 'd3';
-
-import scan_1 from '../data/nessus-1.csv';
-import scan_2 from '../data/nessus-2.csv';
-import scan_3 from '../data/nessus-3.csv';
 
 import '../stylesheets/stacked-bar.scss';
 
@@ -14,7 +9,7 @@ export class StackedBar extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = {
+        this.state = { 
             axis: undefined,
             data: undefined,
             dataset: undefined,
@@ -64,24 +59,13 @@ export class StackedBar extends React.Component {
     }
 
     componentDidMount() {
-        this.initializeChart();
-        this.rerenderChart(
-            true,
-            [
-                {
-                    x: 'scan_1',
-                    y: d3.csvParse(scan_1)
-                },
-                {
-                    x: 'scan_2',
-                    y: d3.csvParse(scan_2)
-                },
-                {
-                    x: 'scan_3',
-                    y: d3.csvParse(scan_3)
-                }
-            ]
-        );
+        this.initializeChart();        
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.dataset) {
+            this.rerenderChart(true, nextProps.dataset);
+        }
     }
   
     componentWillUnmount() { }
@@ -151,7 +135,7 @@ export class StackedBar extends React.Component {
                         return {
                             count: v.length,
                             description: d3.nest()
-                                .key( (d) => d['Description'] )
+                                .key( (d) => d['Name'] )
                                 .rollup( (v) => {
                                     return {
                                         count: v.length,
@@ -215,7 +199,7 @@ export class StackedBar extends React.Component {
         /* ===< STACKED BARS >=== */
         let layers = self.state.layers
             .selectAll('g')
-            .data(this.state.stackedDataset, (d) => d.key ) // layers are matched based on the key property
+            .data(this.state.stackedDataset, (d) => d.key ); // layers are matched based on the key property
         // adds bar groups that are new to the dataset:
         layers.enter()
             .append('g')
@@ -249,7 +233,7 @@ export class StackedBar extends React.Component {
                     let yKeyIndex = self.state.yKeys.findIndex( (key) => key.label === yKey);
                     let color = self.state.yKeys[yKeyIndex].color;
                     
-                    // defines a dynamically colored pattern
+                    // (re)defines a dynamically colored pattern for the selected bar segment:
                     d3.select('#diagonalStripePattern').remove();
                     let pattern = self.state.svg
                         .select('defs')
@@ -271,12 +255,13 @@ export class StackedBar extends React.Component {
                         .attr('height', 10)
                         .attr('fill', color)
                         .style('opacity', 0.9);
-                    // updates
-                    console.log('clicked!', d.data.y[yKey]);
+                    // updated DOM with new selection:
                     d3.selectAll('[rect="bar"]')
                         .style('fill', null);
                     d3.select(this)
                         .style('fill', 'url(#diagonalStripePattern)');
+                    // propagates sub-dataset to parent component:
+                    self.props.commandCenter({donut: d.data.y[yKey]});               
                 });
         // updates bar groups with the new values:
         layers
@@ -321,7 +306,7 @@ export class StackedBar extends React.Component {
 
         
         /* ===< EVENT CAPTURE >=== */
-        console.log(this.state)
+        // console.log(this.state)
     }
 
     renderChartLegend() {
@@ -336,6 +321,7 @@ export class StackedBar extends React.Component {
                 .attr('group', 'key')
                 .attr('key', (d) => d.key )
                 .style('cursor', 'pointer');
+
         // appends the colored circle key identifier:
         keys.append('circle')
             .attr('circle', (d) => d.key )
@@ -377,8 +363,7 @@ export class StackedBar extends React.Component {
             self.state.yKeys[i].visible = !self.state.yKeys[i].visible;
             d3.select(this)
                 .select('circle')
-                .attr('fill', self.state.yKeys[i].visible ? self.state.yKeys[i].color : 'white')
-            self.setState({});            
+                .attr('fill', self.state.yKeys[i].visible ? self.state.yKeys[i].color : 'white')         
             self.rerenderChart(false, self.state.dataset);
         });
     }

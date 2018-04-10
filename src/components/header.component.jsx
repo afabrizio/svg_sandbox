@@ -20,7 +20,7 @@ export class Header extends React.Component {
                     href: "#"
                 },
                 {
-                    name: "StackedBar",
+                    name: "Nessus",
                     href: "#"
                 },
             ]

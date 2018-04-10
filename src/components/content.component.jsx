@@ -1,7 +1,7 @@
 import React from 'react';
 import { InteractiveAreaChart } from './svgs/area-chart.svg.jsx';
 import { HorizontalWidget, VerticalWidget } from './widget.component.jsx';
-import { StackedBar } from './svgs/stacked-bar.svg.jsx';
+import { Nessus } from './nessus.component.jsx';
 
 export class Content extends React.Component {
     constructor(props) {
@@ -31,7 +31,7 @@ export class Content extends React.Component {
             case 2:
                 return <HorizontalWidget />
             case 3:
-                return <StackedBar width="1000" height="400" />
+                return <Nessus />
         }
     }
 }
