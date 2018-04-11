@@ -109,6 +109,15 @@ export class StackedBar extends React.Component {
             .append('g')
             .attr('group', 'layers');
 
+        /* ===< TOOLTIP >=== */
+        this.state.tooltip = this.state.svg
+            .append('g')
+            .attr('group', 'tooltip')
+            .style('display', 'none');
+        this.state.tooltip
+            .append('text')
+            .style('fill', 'black');
+
         /* ===< LEGEND >=== */
         this.state.legend = this.state.svg
             .append('g')
@@ -220,11 +229,22 @@ export class StackedBar extends React.Component {
                 .attr('width', self.state.x.bandwidth())
                 .attr('stroke', 'black')
                 .attr('stroke-width', 0)
+                .on('mousemove', function(d) {
+                    let text = d[1] - d[0];
+                    self.state.tooltip
+                        .select('text')
+                        .text(text)
+                        .attr('transform', 'translate(' + (d3.event.pageX + 4) + ', ' + (d3.event.pageY - 55) + ')');
+                })
                 .on('mouseenter', function(d) {
+                    self.state.tooltip
+                        .style('display', 'block');
                     d3.select(this)
                         .attr('stroke-width', 1);
                 })
                 .on('mouseleave', function(d) {
+                    self.state.tooltip
+                        .style('display', 'none');
                     d3.select(this)
                         .attr('stroke-width', 0);
                 })
@@ -234,11 +254,13 @@ export class StackedBar extends React.Component {
                     let color = self.state.yKeys[yKeyIndex].color;
                     
                     // (re)defines a dynamically colored pattern for the selected bar segment:
-                    d3.select('#diagonalStripePattern').remove();
+                    self.state.svg
+                        .select('#selectedPatternA')
+                        .remove();
                     let pattern = self.state.svg
                         .select('defs')
                         .append('pattern')
-                            .attr('id', 'diagonalStripePattern')
+                            .attr('id', 'selectedPatternA')
                             .attr('patternUnits', 'userSpaceOnUse')
                             .attr('width', 10)
                             .attr('height', 10);
@@ -256,10 +278,11 @@ export class StackedBar extends React.Component {
                         .attr('fill', color)
                         .style('opacity', 0.9);
                     // updated DOM with new selection:
-                    d3.selectAll('[rect="bar"]')
-                        .style('fill', null);
+                    self.state.svg
+                        .selectAll('[rect="bar"]')
+                            .style('fill', null);
                     d3.select(this)
-                        .style('fill', 'url(#diagonalStripePattern)');
+                            .style('fill', 'url(#selectedPatternA)');
                     // propagates sub-dataset to parent component:
                     self.props.commandCenter({donut: d.data.y[yKey]});               
                 });
@@ -277,12 +300,16 @@ export class StackedBar extends React.Component {
             .remove();
         
         /* ===< BAR TOTALS >=== */
-        let totals = self.state.stackedDataset[self.state.stackedDataset.length-1].map( (collection) => {
-            return {
-                xLabel: collection.data.x,
-                total: collection[1]
-            }
-        })
+        let totals = [];
+        if (self.state.stackedDataset.length) {
+            totals = self.state.stackedDataset[self.state.stackedDataset.length-1].map( (collection) => {
+                return {
+                    xLabel: collection.data.x,
+                    total: collection[1]
+                }
+            });
+        }
+        
         let labels = self.state.data
             .selectAll('text')
             .data(totals);
@@ -315,7 +342,7 @@ export class StackedBar extends React.Component {
         // appends a group element for each legend key:
         let keys = this.state.legend
             .selectAll('[group="key"]')
-            .data(self.state.stackedDataset)
+            .data(self.state.stackedDataset, (d) => d.key )
             .enter()
             .append('g')
                 .attr('group', 'key')
