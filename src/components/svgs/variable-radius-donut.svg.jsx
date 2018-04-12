@@ -53,7 +53,7 @@ export class VarRadiusDonut extends React.Component {
 
         /* ===< SIZING >=== */
         this.state.margin = {
-            top: 10,
+            top: 25,
             right: 10,
             bottom: 10,
             left: 10
@@ -84,17 +84,24 @@ export class VarRadiusDonut extends React.Component {
             .append('g')
             .attr('group', 'tooltip')
             .style('display', 'none');
+        let tooltipRadius = this.state.radius - 4;
+        let innerSquareSize = Math.round(2 * tooltipRadius * Math.sin(Math.PI / 4));
         this.state.tooltip
             .append('circle')
-            .attr('r', this.state.radius - 4)
+            .attr('r', tooltipRadius)
             .attr('cx', (this.state.width / 2) + this.state.margin.left) 
             .attr('cy', (this.state.height / 2) + this.state.margin.top)
             .style('fill', '#fff')
             .style('opacity', 0.75);
         this.state.tooltip
-            .append('text')
-            .attr('text-anchor', 'middle')
-            .attr('transform', 'translate(' + ((this.state.width / 2) + this.state.margin.left) + ',' + ((this.state.height / 2) + this.state.margin.top) + ')');
+            .append('foreignObject')
+            .attr('group', 'textContainer')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', innerSquareSize)
+            .attr('height', innerSquareSize)
+            .attr('transform', 'translate(' + ((this.state.width / 2) + this.state.margin.left - (innerSquareSize / 2)) + ',' + ((this.state.height / 2) + this.state.margin.top - (innerSquareSize / 2)) + ')')
+            .style('text-align', 'center');
 
         /* ===< DATA >=== */
         // generates the data group:
@@ -126,8 +133,15 @@ export class VarRadiusDonut extends React.Component {
             .style('display', 'block');
             self.state.piedDataset = self.state.pie(dataset.description);
         this.state.tooltip
-            .select('text')
-            .text(self.state.dataset.count + ' Vulnerabilities')
+            .select('[group="textContainer"]')
+                .html(`
+                    <p>
+                        <b>${self.state.dataset.count} Vulnerabilities</b>
+                    </p>
+                    </br>
+                    <div>${self.state.dataset.xKey}</div>
+                    <div>${self.state.dataset.yKey.key} Risk</div>
+                `);
 
         /* ===< RADIAL AXIS >=== */
         this.state.radialScale
@@ -160,7 +174,7 @@ export class VarRadiusDonut extends React.Component {
             .attr('r', (d) => self.state.radialScale(d) )
             .style('opacity', (d) => (d%1 === 0) ? .25 : 0 );
         ticks.select('text')
-            .attr('dy', (d) => -self.state.radialScale(d) )
+            .attr('dy', (d) => -self.state.radialScale(d) - 2 )
             .style('opacity', (d) => (d%1 === 0) ? 1 : 0)
             .text( (d) =>  d );
         // removals:
@@ -182,13 +196,18 @@ export class VarRadiusDonut extends React.Component {
                 .on('mouseenter', function(d) {
                     d3.select(this)
                         .select('text')
-                            .style('font-size', 14);
+                        .style('font-size', 14);
                     self.state.tooltip
                         .select('circle')
                         .style('fill', self.state.color(d.data.key) );
                     self.state.tooltip
-                        .select('text')
-                        .text(d.data.key);
+                        .select('[group="textContainer"]')
+                        .html(`
+                            <p><b>${d.data.key}</b></p>
+                            <br>
+                            <div>${d.data.value.count} occurences</div>
+                            <div>${d.data.value.hosts.length} hosts affected</div>
+                        `)
                 })
                 .on('mouseleave', function(d) {
                     d3.select(this)
@@ -198,10 +217,24 @@ export class VarRadiusDonut extends React.Component {
                         .select('circle')
                         .style('fill', '#fff');
                     self.state.tooltip
-                        .select('text')
-                        .text(self.state.dataset.count + ' Vulnerabilities');
+                        .select('[group="textContainer"]')
+                        .html(`
+                            <p>
+                                <b>${self.state.dataset.count} Vulnerabilities</b>
+                            </p>
+                            </br>
+                            <div>${self.state.dataset.xKey}</div>
+                            <div>${self.state.dataset.yKey.key} Risk</div>
+                        `);
                 })
                 .on('click', function(d) {
+                    d.data.color = self.state.color(d.data.key);
+                    d.data.yKey = self.state.dataset.yKey;
+                    d.data.yKey.count = self.state.dataset.count;
+                    d.data.xKey = self.state.dataset.xKey;
+                    self.props.commandCenter({
+                        table: d.data
+                    });               
                     // (re)defines a dynamically colored pattern for the selected bar segment:
                     self.state.svg
                         .select('#selectedPatternB')
@@ -261,10 +294,22 @@ export class VarRadiusDonut extends React.Component {
                     - selectAll creates a new grouping.
                 Calling select thus preserves the data, index and even the parent node of the original selection!
             */
-            .attr('d', (d) => self.state.arc(d) );
+            .transition()
+            .duration(750)
+            .attrTween('d', function(d) {
+                let i = d3.interpolate(this._current, d);
+                this._current = i(0);
+                return (t) => self.state.arc(i(t)) ;
+            });
         arcs
             .select('text')
-            .attr('transform', (d) => 'translate(' + self.state.arc.centroid(d) + ')' )
+            .transition()
+            .duration(750)
+            .attrTween('transform', function(d) {
+                let i = d3.interpolate(this._current, d);
+                this._current = i(0);
+                return (t) => 'translate(' + self.state.arc.centroid(i(t)) + ')';
+            })
             .text( (d) => {
                 let percentage = (d.value / self.state.dataset.count) * 100;
                 return (percentage >= 5) ? d.value : '';
@@ -274,8 +319,7 @@ export class VarRadiusDonut extends React.Component {
             .exit()
             .remove();
 
-        /* ===< EVENT CAPTURE >=== */
-        console.log(this.state)
+        // console.log(this.state)
     }
 
     render() {
@@ -287,4 +331,34 @@ export class VarRadiusDonut extends React.Component {
             </div>
         );
     }
+
+    svgTextWrap(text, width) {
+        text.each(function() {
+            let text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word,
+                line = [],
+                lineNumber = 0,
+                lineHeight = 1.1, // ems
+                y = text.attr("y"),
+                dy = parseFloat(text.attr("dy")),
+                tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+            while (word = words.pop()) {
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > width) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+            }
+        });
+    }
 }
+
+/* Inspiration came from a combination of these examples:
+  1. https://bl.ocks.org/mbhall88/b2504f8f3e384de4ff2b9dfa60f325e2
+  2. http://bl.ocks.org/mccannf/3994129 (variable radius)
+  3. https://bl.ocks.org/mbostock/5682158 (animations)
+*/

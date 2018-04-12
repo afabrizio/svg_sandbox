@@ -27,31 +27,26 @@ export class StackedBar extends React.Component {
                 {
                     "label": "None",
                     "color": "#357ABD",
-                    "zIndex": 0,
                     "visible": false
                 },
                 {
                     "label": "Low",
                     "color": "#4CAE4C",
-                    "zIndex": 1,
                     "visible": false
                 },
                 {
                     "label": "Medium",
                     "color": "#FDC431",
-                    "zIndex": 2,
                     "visible": true        
                 },
                 {
                     "label": "High",
                     "color": "#EE9336",
-                    "zIndex": 3,
                     "visible": true        
                 },
                 {
                     "label": "Critical",
                     "color": "#D43F3A",
-                    "zIndex": 4,
                     "visible": true        
                 }
             ],
@@ -81,8 +76,8 @@ export class StackedBar extends React.Component {
         this.state.margin = {
             top: 100,
             right: 50,
-            bottom: 50,
-            left: 50
+            bottom: 110,
+            left: 75
         }
         // defines width and height of chart relative to margins:
         this.state.width = this.props.width - (this.state.margin.left + this.state.margin.right);
@@ -97,6 +92,30 @@ export class StackedBar extends React.Component {
             .append('g')
             .attr('group', 'axis')
             .attr('transform', 'translate(' + this.state.margin.left + ',' + this.state.margin.top + ')');
+        this.state.axis
+            .append('g')
+            .attr('group', 'xAxis')
+            .attr('transform', 'translate(0, ' + this.state.height + ')')
+            .append('text')
+                .attr('text', 'axisLabel')
+                .attr('x', self.state.width / 2)
+                .attr('y', self.state.margin.bottom )
+                .attr('dy', '-1.5em')
+                .style('text-anchor', 'middle')
+                .style('fill', 'black')                
+                .text('Nessus Scan Date');  
+        this.state.axis
+            .append('g')
+            .attr('group', 'yAxis')
+            .append('text')
+                .attr('text', 'axisLabel')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -self.state.height / 2)
+                .attr('y', -self.state.margin.left / 2)
+                .attr('dy', '-1em')
+                .style('text-anchor', 'middle')
+                .style('fill', 'black')
+                .text('Count of Vulnerabilities'); 
 
         /* ===< DATA >=== */
         // generates the data group:
@@ -185,21 +204,20 @@ export class StackedBar extends React.Component {
             .ticks(
                 Math.max(4, Math.floor(this.state.height / 50))
             );
-        // removes old axis
-        this.state.axis.selectAll('*').remove();
+        // adds/updates axis ticks
         this.state.axis
-            .append('g')
-            .attr('group', 'xAxis')
-            .attr('transform', 'translate(0, ' + this.state.height + ')')
+            .select('[group="xAxis"]')
+            .transition()                                    
             .call(this.state.xAxis) // generates elements that make up the axis
-            .selectAll('text')
-                .style('text-anchor', 'end')
-                .attr('dx', '-.8em')
-                .attr('dy', '.15em')
-                .attr('transform', 'rotate(-65)');
+            .selectAll('g')
+                .selectAll('text')
+                    .style('text-anchor', 'end')
+                    .attr('dx', '-.8em')
+                    .attr('dy', '.15em')
+                    .attr('transform', 'rotate(-65)');
         this.state.axis
-            .append('g')
-            .attr('group', 'yAxis')            
+            .select('[group="yAxis"]')
+            .transition()                        
             .call(this.state.yAxis);
 
         /* ===< LEGEND >=== */
@@ -214,7 +232,7 @@ export class StackedBar extends React.Component {
             .append('g')
             .attr('group', 'layer')
             .attr('layer', (d) => d.key )
-            .attr('fill', (d) => {
+            .style('fill', (d) => {
                 let i = self.state.yKeys.findIndex( (key) => key.label === d.key);  
                 return self.state.yKeys[i].color;      
             })
@@ -227,8 +245,8 @@ export class StackedBar extends React.Component {
                 .attr('y', (d) => self.state.y(d[1]) )
                 .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
                 .attr('width', self.state.x.bandwidth())
-                .attr('stroke', 'black')
-                .attr('stroke-width', 0)
+                .style('stroke', 'black')
+                .style('stroke-width', 0)
                 .on('mousemove', function(d) {
                     let text = d[1] - d[0];
                     self.state.tooltip
@@ -240,13 +258,13 @@ export class StackedBar extends React.Component {
                     self.state.tooltip
                         .style('display', 'block');
                     d3.select(this)
-                        .attr('stroke-width', 1);
+                        .style('stroke-width', 1);
                 })
                 .on('mouseleave', function(d) {
                     self.state.tooltip
                         .style('display', 'none');
                     d3.select(this)
-                        .attr('stroke-width', 0);
+                        .style('stroke-width', 0);
                 })
                 .on('click', function(d, i) {
                     let yKey = this.parentNode.getAttribute('layer');
@@ -275,7 +293,7 @@ export class StackedBar extends React.Component {
                         .attr('y', 0)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('fill', color)
+                        .style('fill', color)
                         .style('opacity', 0.9);
                     // updated DOM with new selection:
                     self.state.svg
@@ -284,12 +302,18 @@ export class StackedBar extends React.Component {
                     d3.select(this)
                             .style('fill', 'url(#selectedPatternA)');
                     // propagates sub-dataset to parent component:
+                    d.data.y[yKey].xKey = d.data.x;
+                    d.data.y[yKey].yKey = {
+                        key: yKey,
+                        color: color
+                    };
                     self.props.commandCenter({donut: d.data.y[yKey]});               
                 });
         // updates bar groups with the new values:
         layers
             .selectAll('rect')
             .data( (d) => d )
+            .transition()
             .attr('x', (d) => self.state.x(d.data.x) )
             .attr('y', (d) => self.state.y(d[1]) )
             .attr('height', (d) => self.state.y(d[0]) - self.state.y(d[1]) )
@@ -308,8 +332,7 @@ export class StackedBar extends React.Component {
                     total: collection[1]
                 }
             });
-        }
-        
+        }      
         let labels = self.state.data
             .selectAll('text')
             .data(totals);
@@ -326,13 +349,18 @@ export class StackedBar extends React.Component {
             .attr('y', (d) => self.state.y(d.total) - 4)
             .attr('fill', 'black')
             .attr('text-anchor', 'middle')
-            .text( (d) => d.total );
+            .transition()
+            .tween('text', function(d) {
+                const v0 = this.textContent || "0";
+                const v1 = d.total;
+                const i = d3.interpolate(v0, v1);
+                return (t) => this.textContent = Math.floor(i(t));
+            });
         labels 
             .exit()
+            .transition()
             .remove();
-
         
-        /* ===< EVENT CAPTURE >=== */
         // console.log(this.state)
     }
 
@@ -405,10 +433,3 @@ export class StackedBar extends React.Component {
         );
     }
 }
-
-/* subchart is a combo of these!:
-  1. https://bl.ocks.org/mbhall88/b2504f8f3e384de4ff2b9dfa60f325e2
-  2. http://bl.ocks.org/mccannf/3994129 (variable radius)
-  3. https://bl.ocks.org/mbostock/5682158 (animation)
-  4. http://bl.ocks.org/NPashaP/9994181 (3D)
-*/

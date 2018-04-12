@@ -1,0 +1,32 @@
+[name=nessus] {
+    padding: 10px;
+    
+    [name=stackedBar] {
+        border: solid 1px black;
+        display: inline-block;    
+    }
+    
+    [name=varRadiusDonut] {
+        border: solid 1px black;
+        display: inline-block;
+    }
+    
+    
+    [name=nessusTable] {
+        border: solid 1px black;
+        display: inline-block;
+    
+        .container {
+            height: 100%;            
+            overflow-y: scroll;
+    
+            .hostFilters {
+                list-style: none;
+            }
+
+            .host {
+                background-color: lightblue;
+            }
+        }
+    }
+}

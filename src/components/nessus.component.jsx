@@ -5,8 +5,11 @@ import scan_1 from './data/nessus-1.csv';
 import scan_2 from './data/nessus-2.csv';
 import scan_3 from './data/nessus-3.csv';
 
+import { NessusTable } from './nessus-table.component.jsx';
 import { StackedBar } from './svgs/stacked-bar.svg.jsx';
 import { VarRadiusDonut } from './svgs/variable-radius-donut.svg.jsx';
+
+import './stylesheets/nessus.scss';
 
 
 export class Nessus extends React.Component {
@@ -17,10 +20,11 @@ export class Nessus extends React.Component {
 
         this.state = {
             bar: undefined,
-            donut: undefined,
             commandCenter: function(state) {
                 self.setState(state);
-            }
+            },
+            donut: undefined,
+            table: undefined,
         }
     }
 
@@ -49,8 +53,9 @@ export class Nessus extends React.Component {
     render() {
         return (
             <div name="nessus">
-                <StackedBar width="1000" height="400" dataset={this.state.bar} commandCenter={this.state.commandCenter} />
+                <StackedBar width="1000" height="350" dataset={this.state.bar} commandCenter={this.state.commandCenter} />
                 <VarRadiusDonut width="400" height="400" dataset={this.state.donut} commandCenter={this.state.commandCenter} />
+                <NessusTable width="600" height="400" dataset={this.state.table} commandCenter={this.state.commandCenter} />
             </div>
         );
     }
