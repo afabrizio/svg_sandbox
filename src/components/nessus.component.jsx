@@ -54,8 +54,10 @@ export class Nessus extends React.Component {
         return (
             <div name="nessus">
                 <StackedBar width="1000" height="350" dataset={this.state.bar} commandCenter={this.state.commandCenter} />
-                <VarRadiusDonut width="400" height="400" dataset={this.state.donut} commandCenter={this.state.commandCenter} />
-                <NessusTable width="600" height="400" dataset={this.state.table} commandCenter={this.state.commandCenter} />
+                <div className="auxillary">
+                    <VarRadiusDonut width="400" height="400" dataset={this.state.donut} commandCenter={this.state.commandCenter} />
+                    <NessusTable width="600" height="400" dataset={this.state.table} commandCenter={this.state.commandCenter} />
+                </div>
             </div>
         );
     }

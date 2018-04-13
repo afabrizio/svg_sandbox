@@ -234,7 +234,19 @@ export class VarRadiusDonut extends React.Component {
                     d.data.xKey = self.state.dataset.xKey;
                     self.props.commandCenter({
                         table: d.data
-                    });               
+                    });
+                    // required update since click event fires mouseleave handler:
+                    self.state.tooltip
+                        .select('circle')
+                        .style('fill', self.state.color(d.data.key) );
+                    self.state.tooltip
+                        .select('[group="textContainer"]')
+                        .html(`
+                            <p><b>${d.data.key}</b></p>
+                            <br>
+                            <div>${d.data.value.count} occurences</div>
+                            <div>${d.data.value.hosts.length} hosts affected</div>
+                        `)
                     // (re)defines a dynamically colored pattern for the selected bar segment:
                     self.state.svg
                         .select('#selectedPatternB')

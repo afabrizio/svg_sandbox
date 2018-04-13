@@ -2,31 +2,107 @@
     padding: 10px;
     
     [name=stackedBar] {
-        border: solid 1px black;
-        display: inline-block;    
+        display: inline-block;
     }
     
     [name=varRadiusDonut] {
-        border: solid 1px black;
         display: inline-block;
+        vertical-align: top;          
     }
     
     
     [name=nessusTable] {
-        border: solid 1px black;
         display: inline-block;
+        vertical-align: top;          
     
         .container {
+            display: flex;
+            flex-direction: column;
             height: 100%;            
-            overflow-y: scroll;
+
+            .header {
+                background-color: #eee;
+                border-bottom: solid 1px #dadada;
+
+                .breadcrumbs {
+                    margin: 10px 5px;
+
+                    .crumb {
+                        border: solid 1px black;
+                        border-radius: 2px;
+                        display: inline-block;
+                        padding: 5px 10px;
+                        margin: 5px;
+
+                        &.dropdown {
+                            background: linear-gradient(0deg, transparent, #ddd);
+                            position: relative;
+                            text-align: left;
+                            width: 150px;
+        
     
-            .hostFilters {
-                list-style: none;
+                            span {
+                                padding-right: 10px;
+                            }
+    
+                            svg {
+                                float: right;
+                            }
+
+                            .list {
+                                background-color: white;
+                                border: 1px #dadada solid;
+                                display: none;
+                                height: 150px;
+                                left: 0;
+                                overflow-y: scroll;
+                                position: absolute;
+                                top: 23px;
+                                width: calc(100% - 2px);
+        
+                                label {
+                                    display: block;
+        
+                                    &:hover {
+                                        background-color: #1e90ff;
+                                    }
+                                }
+                            }
+
+                            &:hover {
+                                cursor: pointer;
+                            }
+
+                            &:active {
+                                background: linear-gradient(0deg, #ddd, transparent);                                
+                            }
+                        }
+                    }
+
+                    .delimiter {
+                        padding: 5px;
+                    }
+                }
             }
 
-            .host {
-                background-color: lightblue;
+            .detail {
+                background-color: #eee;
+                display: flex;
+                flex-grow: 1;
+                flex-shrink: 1;
+                flex-basis: auto;
+                overflow-y: scroll;
+
+                table {
+                    border-collapse: collapse;
+
+                    th {
+                        background-color: #d1dff2;                        
+                        padding: 5px 4px;
+                    }
+                }
             }
+
         }
     }
 }
