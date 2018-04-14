@@ -5,11 +5,50 @@ export class NessusTable extends React.Component {
         super(props);
 
         this.state = {
+            export: {
+                dropdown: false,
+                toFile: function(type) {
+                    switch(type) {
+                        case 'csv':
+                            break;
+                        case 'json':
+                            break;
+                        default:
+                    }
+                },
+                toggleDropdown: function(self) {
+                    self.state.export.dropdown = !self.state.export.dropdown;
+                    self.setState({
+                        export: self.state.export
+                    });
+                }
+            },
             hosts: {
                 dropdown: false,
-                toggleDropdown: function(self) {
+                filterHost: function(e, self, hostIndex) {
+                    let indexOf = self.state.hosts.selectedHosts.indexOf(hostIndex);
+                    if (indexOf >= 0) {
+                        self.state.hosts.selectedHosts.splice(indexOf, 1,);
+                    } else {
+                        self.state.hosts.selectedHosts.push(hostIndex);                       
+                    }
+                    self.setState({hosts: self.state.hosts});
+                },
+                selectAll: function(self, deselect) {
+                    if (!deselect) {
+                        self.state.hosts.selectedHosts = self.props.dataset.value.hosts.map( (host, i) => i );
+                    } else {
+                        self.state.hosts.selectedHosts = [];
+                    }
                     self.setState({
-                        hosts: Object.assign({}, self.state.hosts, {dropdown: !self.state.hosts.dropdown})
+                        hosts: self.state.hosts
+                    });
+                },
+                selectedHosts: [0],
+                toggleDropdown: function(self) {
+                    self.state.hosts.dropdown = !self.state.hosts.dropdown;
+                    self.setState({
+                        hosts: self.state.hosts
                     });
                 }
             }
@@ -41,17 +80,31 @@ export class NessusTable extends React.Component {
                             <span className="delimiter">></span>
                             <span className="crumb" style={{'backgroundColor': this.props.dataset.color + 'bf'}}>{this.props.dataset.key}</span>
                             <span className="delimiter">></span>
-                            <span className="crumb dropdown" onClick={() => this.state.hosts.toggleDropdown(this)}>
-                                <span>{0} of {this.props.dataset.value.hosts.length} hosts selected</span>
+                            <span className="crumb dropdown" onClick={(e) => this.state.hosts.toggleDropdown(this)}>
+                                <span>{this.state.hosts.selectedHosts.length} of {this.props.dataset.value.hosts.length} hosts selected</span>
                                 <svg width="10" height="10">
                                     <path d="M 2 2 L 5 8 L 8 2 Z"></path>
                                 </svg>
-                                <div className="list" style={{'display': this.state.hosts.dropdown ? 'block' : 'none'}}>{this.props.dataset.value.hosts.map( (host, i) => (
-                                    <label htmlFor={host.key} key={i}>
-                                        <input type="checkbox" name={host.key} />
+                                <div className="list" style={{'display': this.state.hosts.dropdown ? 'block' : 'none'}} onClick={(e) => e.stopPropagation()}>
+                                    <button type="button" name="selectAll" onClick={() => this.state.hosts.selectAll(this, false)}>Select All</button>
+                                    <button type="button" name="deselectAll" onClick={() => this.state.hosts.selectAll(this, true)}>Deselect All</button>                                    
+                                    {this.props.dataset.value.hosts.map( (host, i) => (
+                                    <label htmlFor={host.key} key={i} onClick={(e) => this.state.hosts.filterHost(e, this, i)}>
+                                        <input type="checkbox" name={host.key} checked={this.state.hosts.selectedHosts.includes(i)} onChange={(e) => e.stopPropagation()}/>
                                         {host.key}
-                                    </label>
-                                ))}</div>
+                                    </label>))}
+                                </div>
+                            </span>
+                            <span className="delimiter">></span>
+                            <span className="crumb dropdown" onClick={(e) => this.state.export.toggleDropdown(this)}>
+                                <span>Export</span>
+                                <svg width="10" height="10">
+                                    <path d="M 2 2 L 5 8 L 8 2 Z"></path>
+                                </svg>
+                                <div className="list" style={{'display': this.state.export.dropdown ? 'block' : 'none'}} onClick={(e) => e.stopPropagation()}>
+                                    <button type="button" name="json" onClick={() => this.state.export.toFile(this, 'csv')}>CSV</button>
+                                    <button type="button" name="csv" onClick={() => this.state.export.toFile(this, 'json')}>JSON</button>                                    
+                                </div>
                             </span>
                         </div>
                     </div>
@@ -63,10 +116,10 @@ export class NessusTable extends React.Component {
                                     <th>Scan Details</th> 
                                 </tr>
                             </thead>
-                            <tbody>{this.props.dataset.value.hosts.map( (host, i) => (
-                                host.values.map( (vulnerability, j) => (
+                            <tbody>{this.state.hosts.selectedHosts.map( (hostIndex) => (
+                                this.props.dataset.value.hosts[hostIndex].values.map( (vulnerability, j) => (
                                 <tr key={j}>
-                                    {(j===0) ? <th rowSpan={host.values.length} valign="top" className="host">{host.key}</th> : null}
+                                    {(j===0) ? <th rowSpan={this.props.dataset.value.hosts[hostIndex].values.length} valign="top" className="host">{this.props.dataset.value.hosts[hostIndex].key}</th> : null}
                                     <td>
                                         <table border="0">
                                             <tbody>{Object.keys(vulnerability).map( (meta, k) => (

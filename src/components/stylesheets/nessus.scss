@@ -35,10 +35,10 @@
                         margin: 5px;
 
                         &.dropdown {
-                            background: linear-gradient(0deg, transparent, #ddd);
+                            background: linear-gradient(0deg, #ddd, transparent);
                             position: relative;
                             text-align: left;
-                            width: 150px;
+                            // width: 150px;
         
     
                             span {
@@ -53,12 +53,17 @@
                                 background-color: white;
                                 border: 1px #dadada solid;
                                 display: none;
-                                height: 150px;
+                                max-height: 150px;
                                 left: 0;
                                 overflow-y: scroll;
                                 position: absolute;
                                 top: 23px;
                                 width: calc(100% - 2px);
+
+                                button {
+                                    font-size: inherit;
+                                    margin: 5px 5px;
+                                }
         
                                 label {
                                     display: block;
@@ -74,7 +79,7 @@
                             }
 
                             &:active {
-                                background: linear-gradient(0deg, #ddd, transparent);                                
+                                background: linear-gradient(0deg, transparent, #ddd);                                
                             }
                         }
                     }
@@ -96,13 +101,22 @@
                 table {
                     border-collapse: collapse;
 
+                    thead {
+                        th:last-child {
+                            width: 100%;
+                        }
+                    }
+
                     th {
                         background-color: #d1dff2;                        
                         padding: 5px 4px;
                     }
+
+                    td:last-child {
+                        width: 100%;
+                    }
                 }
             }
-
         }
     }
 }
